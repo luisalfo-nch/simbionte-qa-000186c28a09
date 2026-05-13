@@ -399,8 +399,30 @@ button.small {
   font-size: 13px;
   font-weight: 500;
   color: var(--fg);
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 }
+
+.session-progress-bar {
+  display: flex;
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  margin: 4px 0 6px;
+}
+.session-progress-bar > span {
+  height: 100%;
+  display: block;
+  transition: width 0.3s ease-out;
+}
+.spb-pass { background: var(--pass); }
+.spb-fail { background: var(--fail); }
+.spb-na   { background: var(--skip); }
+.spb-p0   { background: var(--p0); }
+.spb-p1   { background: var(--p1); }
+.spb-p2   { background: var(--p2); }
+.spb-p3   { background: var(--p3); }
 
 .session-date {
   font-size: 11px;
@@ -1412,6 +1434,81 @@ button.big-action small {
     <div id="auditBlocks" class="audit-blocks">
       <!-- populated by JS -->
     </div>
+
+    <section id="auditExtras" class="audit-extras hidden">
+      <h3>Adicionales (no contemplados en el flow)</h3>
+      <p class="muted small">Si encuentras user stories o bugs que el flow oficial no cubre, registra aquí. Quedan en el reporte como "ad-hoc" para que el equipo Simbionte los considere para próximas versiones.</p>
+
+      <div class="extras-actions">
+        <button id="btnAddCustomStep" class="ghost">＋ User story no considerada</button>
+        <button id="btnAddAdhocBug" class="ghost">＋ Bug fuera de los pasos</button>
+      </div>
+
+      <form id="customStepForm" class="extra-form hidden" onsubmit="return false">
+        <h4>📌 Nueva user story custom</h4>
+        <label class="field">
+          <span>Quiero (qué intentabas hacer)</span>
+          <input type="text" id="csTitle" placeholder="ej. exportar la lista de campañas a CSV" />
+        </label>
+        <label class="field">
+          <span>Como (rol opcional)</span>
+          <input type="text" id="csWho" placeholder="ej. cliente / scientist / superadmin" />
+        </label>
+        <label class="field">
+          <span>Cuando (precondición opcional)</span>
+          <textarea id="csWhen" rows="2" placeholder="ej. tengo permiso para ver el listado"></textarea>
+        </label>
+        <label class="field">
+          <span>Entonces debería ver (resultado esperado opcional)</span>
+          <textarea id="csThen" rows="2" placeholder="ej. un archivo CSV descargable"></textarea>
+        </label>
+        <div class="extra-form-actions">
+          <button type="button" id="btnSaveCustomStep" class="primary">Guardar user story</button>
+          <button type="button" id="btnCancelCustomStep" class="ghost">Cancelar</button>
+        </div>
+      </form>
+
+      <form id="adhocBugForm" class="extra-form hidden" onsubmit="return false">
+        <h4>🐛 Bug suelto (no vinculado a un paso del flow)</h4>
+        <label class="field">
+          <span>Título corto</span>
+          <input type="text" id="abTitle" placeholder="ej. logout no limpia el avatar del header" />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>Severity</span>
+            <select id="abSeverity">
+              <option value="P0">P0 · bloquea producción</option>
+              <option value="P1" selected>P1 · bloquea demo</option>
+              <option value="P2">P2 · degrada UX</option>
+              <option value="P3">P3 · pulido</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Bloque (opcional)</span>
+            <select id="abBlock"></select>
+          </label>
+        </div>
+        <label class="field">
+          <span>Pasos para reproducir</span>
+          <textarea id="abSteps" rows="3" placeholder="1. ...&#10;2. ..."></textarea>
+        </label>
+        <label class="field">
+          <span>Resultado esperado</span>
+          <textarea id="abExpected" rows="2"></textarea>
+        </label>
+        <label class="field">
+          <span>Resultado actual</span>
+          <textarea id="abActual" rows="2"></textarea>
+        </label>
+        <div class="extra-form-actions">
+          <button type="button" id="btnSaveAdhocBug" class="primary">Guardar bug</button>
+          <button type="button" id="btnCancelAdhocBug" class="ghost">Cancelar</button>
+        </div>
+      </form>
+
+      <div id="adhocBugList" class="adhoc-bug-list"></div>
+    </section>
   </section>
 
   <!-- ===== Final ===== -->
@@ -3918,8 +4015,9 @@ function newSessionTemplate() {
     startedAt: null,
     completedAt: null,
     lastActiveAt: null,
-    bugs: [],
-    audit: {},
+    bugs: [],            // [{ id, title, severity, blockSlug, steps, expected, actual, ... }]
+    audit: {},           // { stepN | "custom-xxx": { result, comment } }
+    customSteps: [],     // [{ id, title, who, when, then }]  ← user stories ad-hoc en audit
     currentBugId: null,
   };
 }
@@ -4057,6 +4155,49 @@ function renderPendingSessions() {
         : `<strong>${marked}/${total}</strong> pasos · <span style="color:var(--pass)">✓ ${pass}</span> · <span style="color:var(--fail)">✗ ${fail}</span> · <span style="color:var(--skip)">— ${na}</span>`;
     }
     const lastAt = (s.lastActiveAt || s.startedAt || "").slice(0, 16).replace("T", " ");
+
+    // Barra de progreso segmentada (4 colores): pass / fail / na / pending
+    let progressBar = "";
+    if (s.mode === "audit") {
+      const flow = (window.__QA_DATA?.flows || []).find(f => f.role === s.role);
+      const total = (flow?.steps?.length || 0) + (s.customSteps?.length || 0);
+      const auditVals = Object.values(s.audit || {});
+      let pass = 0, fail = 0, na = 0;
+      for (const v of auditVals) {
+        if (v?.result === "pass") pass++;
+        else if (v?.result === "fail") fail++;
+        else if (v?.result === "na") na++;
+      }
+      if (total > 0) {
+        const passW = (pass / total) * 100;
+        const failW = (fail / total) * 100;
+        const naW = (na / total) * 100;
+        progressBar = `
+          <div class="session-progress-bar" title="${pass}/${total} pasa · ${fail}/${total} falla · ${na}/${total} N/A">
+            <span class="spb-pass" style="width:${passW}%"></span>
+            <span class="spb-fail" style="width:${failW}%"></span>
+            <span class="spb-na" style="width:${naW}%"></span>
+          </div>
+        `;
+      }
+    } else if (s.mode === "bugs") {
+      // Barra por severidad: P0 P1 P2 P3
+      const bugs = s.bugs || [];
+      if (bugs.length > 0) {
+        const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
+        for (const b of bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
+        const total = bugs.length;
+        progressBar = `
+          <div class="session-progress-bar" title="P0:${counts.P0} P1:${counts.P1} P2:${counts.P2} P3:${counts.P3}">
+            <span class="spb-p0" style="width:${(counts.P0 / total) * 100}%"></span>
+            <span class="spb-p1" style="width:${(counts.P1 / total) * 100}%"></span>
+            <span class="spb-p2" style="width:${(counts.P2 / total) * 100}%"></span>
+            <span class="spb-p3" style="width:${(counts.P3 / total) * 100}%"></span>
+          </div>
+        `;
+      }
+    }
+
     const div = document.createElement("div");
     div.className = "session-item";
     div.innerHTML = `
@@ -4066,6 +4207,7 @@ function renderPendingSessions() {
           <span class="badge-role-small">${escapeHtml(s.role || "sin rol")}</span>
         </div>
         <div class="session-progress">${progress}</div>
+        ${progressBar}
         <div class="session-date muted small">Última actividad: ${lastAt}</div>
       </div>
       <div class="session-actions">
@@ -4456,6 +4598,9 @@ function renderAuditView() {
     container.appendChild(pre);
   }
 
+  // Asegurar que customSteps existe (compatibilidad)
+  if (!Array.isArray(session.customSteps)) session.customSteps = [];
+
   // Si el flow tiene fases, agrupar los steps en bloques colapsables por fase.
   // Si no, lista plana.
   if (flow.phases?.length) {
@@ -4494,7 +4639,226 @@ function renderAuditView() {
     }
   }
 
+  // Custom steps (ad-hoc user stories) al final
+  if (session.customSteps.length > 0) {
+    const customHeader = document.createElement("div");
+    customHeader.className = "custom-steps-header";
+    customHeader.innerHTML = `<h4>📌 User stories no consideradas en el flow oficial (${session.customSteps.length})</h4>`;
+    container.appendChild(customHeader);
+    for (const cs of session.customSteps) {
+      container.appendChild(renderCustomStepCard(cs, flow));
+    }
+  }
+
+  // Mostrar sección de extras (forms + lista de bugs ad-hoc)
+  $("auditExtras").classList.remove("hidden");
+  renderAdhocBugList();
+
   updateAuditProgress();
+}
+
+function renderCustomStepCard(cs, flow) {
+  const audit = session.audit[cs.id] || {};
+  const div = document.createElement("div");
+  div.className = "scenario-card flow-step custom-step" + (audit.result ? " marked result-" + audit.result : "");
+  div.dataset.step = cs.id;
+
+  const metaHtml = `
+    <div class="scenario-meta">
+      <span class="badge-custom">📌 Custom</span>
+      ${cs.who ? `<span class="badge-role">Como ${escapeHtml(cs.who)}</span>` : ""}
+    </div>
+  `;
+  const titleHtml = `<h4 class="scenario-title">${escapeHtml(cs.title)}</h4>`;
+  let bodyHtml = "";
+  if (cs.when) {
+    bodyHtml += `<div class="scenario-section"><div class="scenario-label">Cuando</div><div class="scenario-body">${MdRender.toHtml(cs.when)}</div></div>`;
+  }
+  if (cs.then) {
+    bodyHtml += `<div class="scenario-section"><div class="scenario-label">Entonces debería ver</div><div class="scenario-body">${MdRender.toHtml(cs.then)}</div></div>`;
+  }
+  const decisionHtml = `
+    <div class="scenario-decision">
+      <button class="decision-btn pass ${audit.result === "pass" ? "selected" : ""}" data-result="pass">✓ Pasa</button>
+      <button class="decision-btn fail ${audit.result === "fail" ? "selected" : ""}" data-result="fail">✗ Falla</button>
+      <button class="decision-btn na ${audit.result === "na" ? "selected" : ""}" data-result="na">— N/A</button>
+    </div>
+    <textarea class="scenario-comment" placeholder="Detalle…">${escapeHtml(audit.comment || "")}</textarea>
+    <div class="custom-step-actions">
+      <button class="ghost small btn-delete-custom" data-id="${cs.id}">🗑 Eliminar user story</button>
+    </div>
+  `;
+  div.innerHTML = metaHtml + titleHtml + bodyHtml + decisionHtml;
+
+  div.querySelectorAll(".decision-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const result = btn.dataset.result;
+      if (!session.audit[cs.id]) session.audit[cs.id] = {};
+      session.audit[cs.id].result = result;
+      div.classList.remove("marked", "result-pass", "result-fail", "result-na");
+      div.classList.add("marked", "result-" + result);
+      div.querySelectorAll(".decision-btn").forEach(b => b.classList.toggle("selected", b.dataset.result === result));
+      updateAuditProgress();
+      saveSession();
+    });
+  });
+  div.querySelector(".scenario-comment").addEventListener("input", e => {
+    if (!session.audit[cs.id]) session.audit[cs.id] = {};
+    session.audit[cs.id].comment = e.target.value;
+    saveSession();
+  });
+  div.querySelector(".btn-delete-custom").addEventListener("click", () => {
+    if (!confirm("¿Eliminar esta user story custom y su marca?")) return;
+    session.customSteps = session.customSteps.filter(c => c.id !== cs.id);
+    delete session.audit[cs.id];
+    saveSession();
+    renderAuditView();
+  });
+
+  return div;
+}
+
+// ===== Custom step form =====
+function openCustomStepForm() {
+  $("customStepForm").classList.remove("hidden");
+  $("adhocBugForm").classList.add("hidden");
+  $("csTitle").value = "";
+  $("csWho").value = "";
+  $("csWhen").value = "";
+  $("csThen").value = "";
+  setTimeout(() => $("csTitle").focus(), 50);
+}
+
+function closeCustomStepForm() {
+  $("customStepForm").classList.add("hidden");
+}
+
+function saveCustomStep() {
+  const title = $("csTitle").value.trim();
+  if (!title) {
+    alert("Pon al menos un título a la user story custom.");
+    return;
+  }
+  const cs = {
+    id: "custom-" + uid(),
+    title,
+    who: $("csWho").value.trim() || null,
+    when: $("csWhen").value.trim() || null,
+    then: $("csThen").value.trim() || null,
+    createdAt: new Date().toISOString(),
+  };
+  if (!Array.isArray(session.customSteps)) session.customSteps = [];
+  session.customSteps.push(cs);
+  saveSession();
+  closeCustomStepForm();
+  renderAuditView();
+  // Scroll a la nueva card
+  setTimeout(() => {
+    const newCard = document.querySelector(`.scenario-card[data-step="${cs.id}"]`);
+    newCard?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 150);
+}
+
+// ===== Ad-hoc bug form (desde audit, sin vinculación a paso) =====
+function openAdhocBugForm() {
+  $("adhocBugForm").classList.remove("hidden");
+  $("customStepForm").classList.add("hidden");
+  $("abTitle").value = "";
+  $("abSeverity").value = "P1";
+  $("abSteps").value = "";
+  $("abExpected").value = "";
+  $("abActual").value = "";
+  populateAdhocBugBlocks();
+  setTimeout(() => $("abTitle").focus(), 50);
+}
+
+function closeAdhocBugForm() {
+  $("adhocBugForm").classList.add("hidden");
+}
+
+function populateAdhocBugBlocks() {
+  const sel = $("abBlock");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Sin bloque concreto —</option>';
+  const blocks = (window.__QA_DATA?.blocks || [])
+    .filter(b => /^\d{2}-/.test(b.file))
+    .sort((a, b) => a.number - b.number);
+  for (const b of blocks) {
+    const opt = document.createElement("option");
+    opt.value = b.slug;
+    opt.textContent = `${String(b.number).padStart(2, "0")} · ${b.title}`;
+    sel.appendChild(opt);
+  }
+}
+
+async function saveAdhocBug() {
+  const title = $("abTitle").value.trim();
+  if (!title) {
+    alert("Pon al menos un título al bug.");
+    return;
+  }
+  const bug = {
+    id: uid(),
+    title,
+    severity: $("abSeverity").value,
+    blockSlug: $("abBlock").value || null,
+    steps: $("abSteps").value,
+    expected: $("abExpected").value,
+    actual: $("abActual").value,
+    screenshots: [],
+    adhoc: true,                      // marca: fuera del flow
+    sourceMode: "audit",
+    createdAt: new Date().toISOString(),
+  };
+  // Auto-capturar contexto del tab activo
+  try {
+    const resp = await chrome.runtime.sendMessage({ type: "captureScreenshot" });
+    if (resp && !resp.error) {
+      bug.context = { url: resp.url, title: resp.title, capturedAt: resp.capturedAt };
+      bug.screenshots.push({
+        dataUrl: resp.dataUrl,
+        url: resp.url,
+        title: resp.title,
+        capturedAt: resp.capturedAt,
+        auto: true,
+      });
+    }
+  } catch (e) { /* no bloqueante */ }
+  session.bugs.push(bug);
+  await saveSession();
+  closeAdhocBugForm();
+  renderAdhocBugList();
+}
+
+function renderAdhocBugList() {
+  const container = $("adhocBugList");
+  if (!container) return;
+  const adhoc = (session.bugs || []).filter(b => b.adhoc);
+  if (!adhoc.length) {
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = `<h4>🐛 Bugs sueltos en esta sesión (${adhoc.length})</h4>`;
+  for (const bug of adhoc) {
+    const div = document.createElement("div");
+    div.className = "adhoc-bug-item";
+    const sev = (bug.severity || "P2").toLowerCase();
+    div.innerHTML = `
+      <span class="sev ${sev}">${bug.severity}</span>
+      <div class="ab-info">
+        <div class="ab-title">${escapeHtml(bug.title)}</div>
+        ${bug.context?.url ? `<div class="ab-url muted small">${escapeHtml(bug.context.url)}</div>` : ""}
+      </div>
+      <button class="ghost small btn-delete-adhoc" data-id="${bug.id}" title="Eliminar">🗑</button>
+    `;
+    div.querySelector(".btn-delete-adhoc").addEventListener("click", () => {
+      if (!confirm("¿Eliminar este bug?")) return;
+      session.bugs = session.bugs.filter(b => b.id !== bug.id);
+      saveSession();
+      renderAdhocBugList();
+    });
+    container.appendChild(div);
+  }
 }
 
 function renderFlowStepCard(step, flow) {
@@ -4581,8 +4945,10 @@ function updateAuditProgress() {
     $("auditProgress").innerHTML = "";
     return;
   }
-  const total = flow.steps.length;
+  const customCount = session.customSteps?.length || 0;
+  const total = flow.steps.length + customCount;
   let marked = 0, pass = 0, fail = 0, na = 0;
+  // Flow steps
   for (const step of flow.steps) {
     const r = session.audit[step.n]?.result;
     if (r) {
@@ -4592,15 +4958,33 @@ function updateAuditProgress() {
       else if (r === "na") na++;
     }
   }
+  // Custom steps
+  for (const cs of (session.customSteps || [])) {
+    const r = session.audit[cs.id]?.result;
+    if (r) {
+      marked++;
+      if (r === "pass") pass++;
+      else if (r === "fail") fail++;
+      else if (r === "na") na++;
+    }
+  }
   const pct = total > 0 ? Math.round((marked / total) * 100) : 0;
+  // Barra segmentada por color
+  const passW = total ? (pass / total) * 100 : 0;
+  const failW = total ? (fail / total) * 100 : 0;
+  const naW = total ? (na / total) * 100 : 0;
   $("auditProgress").innerHTML = `
     <div class="audit-counters">
-      <span><strong>${marked}/${total}</strong> pasos</span>
+      <span><strong>${marked}/${total}</strong> pasos${customCount ? ` <span class="muted">(${customCount} custom)</span>` : ""}</span>
       <span style="color:var(--pass)">✓ ${pass}</span>
       <span style="color:var(--fail)">✗ ${fail}</span>
       <span style="color:var(--skip)">— ${na}</span>
     </div>
-    <div class="audit-progress-bar"><div class="audit-progress-bar-fill" style="width:${pct}%"></div></div>
+    <div class="audit-progress-bar segmented">
+      <span class="spb-pass" style="width:${passW}%"></span>
+      <span class="spb-fail" style="width:${failW}%"></span>
+      <span class="spb-na" style="width:${naW}%"></span>
+    </div>
   `;
 
   // Actualizar counters por fase
@@ -4721,8 +5105,20 @@ function buildReport() {
       result: session.audit[step.n]?.result || null,
       comment: session.audit[step.n]?.comment || "",
     })),
+    customSteps: (session.customSteps || []).map(cs => ({
+      id: cs.id,
+      title: cs.title,
+      who: cs.who || null,
+      when: cs.when || null,
+      then: cs.then || null,
+      result: session.audit[cs.id]?.result || null,
+      comment: session.audit[cs.id]?.comment || "",
+      createdAt: cs.createdAt || null,
+    })),
   };
-  return { meta, audit: auditReport };
+  // En modo audit también devolver bugs sueltos (los bugs ad-hoc registrados desde audit)
+  const adhocBugs = (session.bugs || []).filter(b => b.adhoc);
+  return { meta, audit: auditReport, adhocBugs };
 }
 
 function reportToMarkdown(report) {
@@ -4803,6 +5199,34 @@ function reportToMarkdown(report) {
       lines.push(`| ${s.n} | ${s.title} | ${s.block || "—"} | ${s.priority || "—"} | ${icon} ${s.result || "—"} | ${comment} |`);
     }
     lines.push("");
+    // Custom steps (user stories no consideradas)
+    if (audit.customSteps?.length) {
+      lines.push(`## 📌 User stories no consideradas en el flow oficial (${audit.customSteps.length})`);
+      lines.push("");
+      for (const cs of audit.customSteps) {
+        const icon = cs.result === "pass" ? "✅" : cs.result === "fail" ? "❌" : cs.result === "na" ? "⏭" : "⚪";
+        lines.push(`### ${icon} ${cs.title}`);
+        if (cs.who) lines.push(`**Como:** ${cs.who}`);
+        if (cs.when) lines.push(`**Cuando:** ${cs.when}`);
+        if (cs.then) lines.push(`**Entonces:** ${cs.then}`);
+        if (cs.comment) lines.push(`**Comentario tester:** ${cs.comment}`);
+        lines.push("");
+      }
+    }
+    // Bugs ad-hoc registrados desde audit
+    if (report.adhocBugs?.length) {
+      lines.push(`## 🐛 Bugs sueltos en esta sesión (${report.adhocBugs.length})`);
+      lines.push("");
+      for (const b of report.adhocBugs) {
+        lines.push(`### [${b.severity}] ${b.title}`);
+        if (b.blockSlug) lines.push(`**Bloque:** ${b.blockSlug}`);
+        if (b.context?.url) lines.push(`**URL:** \`${b.context.url}\``);
+        if (b.steps) lines.push(`**Pasos:**\n${b.steps}`);
+        if (b.expected) lines.push(`**Esperado:** ${b.expected}`);
+        if (b.actual) lines.push(`**Actual:** ${b.actual}`);
+        lines.push("");
+      }
+    }
     // Failures resumidos al final
     const fails = (audit.steps || []).filter(s => s.result === "fail");
     if (fails.length) {
@@ -5025,7 +5449,58 @@ function notionMarkdownForAudit(report) {
   }
   lines.push("");
 
-  return { md: lines.join("\n"), stub, sortedBugs: [] };
+  // Custom steps (user stories ad-hoc)
+  if (audit.customSteps?.length) {
+    lines.push("---");
+    lines.push("");
+    lines.push(`## 📌 User stories que el cliente añadió (no estaban en el flow oficial)`);
+    lines.push("");
+    lines.push(`*Estas son user stories que el tester encontró relevantes y no estaban contempladas. Vale la pena que el equipo Simbionte las considere para próximas versiones del flow.*`);
+    lines.push("");
+    for (const cs of audit.customSteps) {
+      const icon = RESULT_EMOJI[cs.result || "null"] || "⚪";
+      lines.push(`### ${icon} ${cs.title}`);
+      if (cs.who) lines.push(`**Como:** ${cs.who}`);
+      if (cs.when) lines.push(`**Cuando:** ${cs.when}`);
+      if (cs.then) lines.push(`**Entonces debería ver:** ${cs.then}`);
+      if (cs.comment) lines.push(`💬 ${cs.comment}`);
+      lines.push("");
+    }
+  }
+
+  // Bugs ad-hoc desde audit
+  if (report.adhocBugs?.length) {
+    lines.push("---");
+    lines.push("");
+    lines.push(`## 🐛 Bugs sueltos registrados durante este audit`);
+    lines.push("");
+    lines.push(`*Bugs encontrados que no encajaban en un paso concreto del flow.*`);
+    lines.push("");
+    for (const b of report.adhocBugs) {
+      const emoji = SEV_EMOJI[b.severity] || "⚪";
+      lines.push(`### ${emoji} [${b.severity}] ${b.title}`);
+      if (b.blockSlug) lines.push(`📍 **Bloque:** \`${b.blockSlug}\``);
+      if (b.context?.url) lines.push(`🔗 **URL:** \`${b.context.url}\``);
+      lines.push("");
+      if (b.steps) {
+        lines.push(`**Pasos para reproducir:**`);
+        lines.push("");
+        lines.push(b.steps);
+        lines.push("");
+      }
+      if (b.expected) lines.push(`> ✅ **Esperado:** ${b.expected}`);
+      if (b.actual) lines.push(`> ❌ **Actual:** ${b.actual}`);
+      if (b.screenshots?.length) {
+        lines.push("");
+        b.screenshots.forEach((s, i) => {
+          lines.push(`- 📸 \`screenshots/adhoc-bug-${b.id}-${i + 1}.png\``);
+        });
+      }
+      lines.push("");
+    }
+  }
+
+  return { md: lines.join("\n"), stub, sortedBugs: report.adhocBugs || [] };
 }
 
 async function exportNotionBundle() {
@@ -5162,8 +5637,17 @@ async function init() {
   $("btnFinishAudit").addEventListener("click", showFinal);
   $("btnExitAudit").addEventListener("click", () => {
     saveSession();
+    $("auditExtras").classList.add("hidden");
     showWelcomeView();
   });
+
+  // Custom step + ad-hoc bug
+  $("btnAddCustomStep").addEventListener("click", openCustomStepForm);
+  $("btnCancelCustomStep").addEventListener("click", closeCustomStepForm);
+  $("btnSaveCustomStep").addEventListener("click", saveCustomStep);
+  $("btnAddAdhocBug").addEventListener("click", openAdhocBugForm);
+  $("btnCancelAdhocBug").addEventListener("click", closeAdhocBugForm);
+  $("btnSaveAdhocBug").addEventListener("click", saveAdhocBug);
 
   // ===== Final =====
   $("btnExportNotion").addEventListener("click", exportNotionBundle);
