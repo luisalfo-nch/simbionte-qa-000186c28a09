@@ -953,18 +953,19 @@ button.small {
    ============================================================ */
 
 .audit-progress {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-  margin-bottom: var(--space-4);
+  /* Sin caja: solo contador + barra fina */
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 var(--space-2);
+  margin-bottom: var(--space-3);
   font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  box-shadow: var(--shadow-sm);
+  gap: var(--space-2);
+  box-shadow: none;
 }
 
 .audit-progress-bar {
@@ -995,17 +996,17 @@ button.small {
   gap: var(--space-3);
 }
 
-/* Flow header en audit (banner explicativo) */
+/* Flow header en audit (sin caja, solo título y meta) */
 .flow-header {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3) var(--space-4);
-  box-shadow: var(--shadow-sm);
+  background: transparent;
+  border: none;
+  padding: 0 0 var(--space-3);
+  margin-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border);
 }
 .flow-header-title {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 650;
   margin-bottom: 4px;
   letter-spacing: -0.01em;
 }
@@ -1033,18 +1034,18 @@ button.small {
   line-height: var(--leading-base);
 }
 
-/* Phase grouping */
+/* Phase grouping — sin caja, solo separación con título sticky-feel */
 .phase-group {
   display: block;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--bg-subtle);
-  padding: var(--space-3) var(--space-3) var(--space-2);
-  margin-top: var(--space-3);
-  transition: border-color 0.2s;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  margin-top: var(--space-4);
 }
-.phase-group.complete {
-  border-color: var(--pass);
+.phase-group.complete .phase-num {
+  background: var(--pass-soft);
+  color: var(--pass);
 }
 
 .phase-header {
@@ -1052,9 +1053,9 @@ button.small {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-2);
-  padding-bottom: var(--space-2);
-  border-bottom: 1px dashed var(--border-strong);
-  margin-bottom: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-2);
 }
 
 .phase-title {
@@ -1101,16 +1102,10 @@ button.small {
   font-size: 12.5px;
   color: var(--fg-muted);
   line-height: var(--leading-base);
-  margin-bottom: var(--space-3);
-  padding: 0 var(--space-2);
+  margin-bottom: var(--space-2);
+  padding: 0;
 }
 .phase-description p { margin: 0; }
-
-/* Cards dentro de phase-group */
-.phase-group .scenario-card {
-  background: var(--bg-elevated);
-  margin-top: var(--space-2);
-}
 
 /* Empty state cuando no hay flow para el rol */
 .empty-state {
@@ -1204,29 +1199,28 @@ button.small {
    ============================================================ */
 
 .scenario-card {
-  margin-top: var(--space-4);
-  padding: var(--space-4);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: border-left-color 0.2s, opacity 0.2s;
 }
 
 .scenario-card.marked {
-  border-color: var(--border);
-  background: var(--bg-subtle);
+  background: var(--bg-elevated);
 }
 
 .scenario-card.marked.result-pass {
-  border-color: var(--pass);
-  background: linear-gradient(0deg, var(--pass-soft) 0%, var(--bg-elevated) 100%);
+  border-left-color: var(--pass);
 }
 .scenario-card.marked.result-fail {
-  border-color: var(--fail);
-  background: linear-gradient(0deg, var(--fail-soft) 0%, var(--bg-elevated) 100%);
+  border-left-color: var(--fail);
 }
 .scenario-card.marked.result-na {
-  opacity: 0.7;
+  border-left-color: var(--skip);
+  opacity: 0.75;
 }
 
 .scenario-meta {
@@ -5492,10 +5486,12 @@ function updateAuditProgress() {
 
 function autoScrollToNextStep(currentCard) {
   setTimeout(() => {
-    let next = currentCard.nextElementSibling;
-    while (next && !next.classList.contains("flow-step")) {
-      next = next.nextElementSibling;
-    }
+    // Buscar entre TODOS los steps del documento en orden — cruza fronteras
+    // de fase sin problema (querySelectorAll devuelve elementos en document order).
+    const allSteps = Array.from(document.querySelectorAll(".scenario-card.flow-step"));
+    const currentIdx = allSteps.indexOf(currentCard);
+    if (currentIdx === -1) return;
+    const next = allSteps[currentIdx + 1];
     if (next) {
       next.scrollIntoView({ behavior: "smooth", block: "start" });
     }
