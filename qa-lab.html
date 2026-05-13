@@ -1260,6 +1260,175 @@ button.big-action small {
 }
 
 /* ============================================================
+   Audit extras — custom steps + ad-hoc bugs
+   ============================================================ */
+
+.audit-extras {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--border-strong);
+}
+
+.audit-extras h3 {
+  margin-top: 0;
+  color: var(--fg);
+  text-transform: none;
+  letter-spacing: -0.005em;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.audit-extras > p {
+  font-size: 12.5px;
+  margin-bottom: var(--space-3);
+}
+
+.extras-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.extras-actions button {
+  font-size: 12.5px;
+  padding: 10px var(--space-2);
+  border-style: dashed;
+  font-weight: 550;
+}
+
+.extras-actions button:hover {
+  border-style: solid;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.extra-form {
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  margin-bottom: var(--space-3);
+  box-shadow: var(--shadow-md);
+}
+
+.extra-form h4 {
+  margin: 0 0 var(--space-3);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.extra-form-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border);
+}
+
+.scenario-card.custom-step {
+  border-left: 3px solid var(--accent);
+}
+
+.badge-custom {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-xs);
+  background: var(--accent);
+  color: var(--accent-fg);
+  letter-spacing: 0.04em;
+}
+
+.custom-step-actions {
+  margin-top: var(--space-2);
+  text-align: right;
+}
+.custom-step-actions button {
+  font-size: 11.5px;
+  color: var(--fg-muted);
+}
+.custom-step-actions button:hover {
+  color: var(--fail);
+  border-color: var(--fail-soft);
+}
+
+.custom-steps-header {
+  margin: var(--space-5) 0 var(--space-2);
+}
+.custom-steps-header h4 {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--accent);
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--accent);
+}
+
+.adhoc-bug-list {
+  margin-top: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+}
+.adhoc-bug-list:empty { display: none; }
+
+.adhoc-bug-list h4 {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--fail);
+  margin: var(--space-2) 0 var(--space-1);
+  text-transform: none;
+  letter-spacing: -0.005em;
+}
+
+.adhoc-bug-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--fail);
+  border-radius: var(--radius-sm);
+}
+.adhoc-bug-item .ab-info { flex: 1; min-width: 0; }
+.adhoc-bug-item .ab-title { font-size: 13px; font-weight: 500; color: var(--fg); }
+.adhoc-bug-item .ab-url {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.btn-delete-adhoc {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-color: transparent;
+}
+.btn-delete-adhoc:hover {
+  background: var(--fail-soft);
+  color: var(--fail);
+}
+
+.audit-progress-bar.segmented {
+  display: flex;
+  height: 7px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  padding: 0;
+  margin-top: var(--space-2);
+}
+.audit-progress-bar.segmented > span {
+  display: block;
+  height: 100%;
+  transition: width 0.3s ease-out;
+}
+
+/* ============================================================
    Scrollbar polish (webkit only)
    ============================================================ */
 *::-webkit-scrollbar { width: 10px; height: 10px; }
