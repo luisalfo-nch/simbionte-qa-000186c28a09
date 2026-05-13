@@ -1203,24 +1203,22 @@ button.small {
   padding: var(--space-3);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--border);
   border-radius: var(--radius-sm);
-  transition: border-left-color 0.2s, opacity 0.2s;
-}
-
-.scenario-card.marked {
-  background: var(--bg-elevated);
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
 }
 
 .scenario-card.marked.result-pass {
-  border-left-color: var(--pass);
+  background: rgba(31, 122, 55, 0.06);
+  border-color: rgba(31, 122, 55, 0.18);
 }
 .scenario-card.marked.result-fail {
-  border-left-color: var(--fail);
+  background: rgba(179, 38, 30, 0.06);
+  border-color: rgba(179, 38, 30, 0.18);
 }
 .scenario-card.marked.result-na {
-  border-left-color: var(--skip);
-  opacity: 0.75;
+  background: rgba(95, 99, 104, 0.05);
+  border-color: var(--border);
+  opacity: 0.8;
 }
 
 .scenario-meta {
