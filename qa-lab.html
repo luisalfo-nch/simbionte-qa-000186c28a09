@@ -296,6 +296,7 @@ button.small {
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .badge-lab {
@@ -307,6 +308,109 @@ button.small {
   border-radius: var(--radius-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+}
+
+/* Identity chip in welcome header */
+.identity-chip {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  padding: 3px 4px 3px 12px;
+  font-size: 12.5px;
+  color: var(--fg-muted);
+}
+
+.ghost-icon {
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  padding: 4px 6px;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ghost-icon:hover {
+  background: var(--border);
+  color: var(--fg);
+}
+
+/* Pending sessions block */
+.pending-block {
+  margin: var(--space-4) 0;
+}
+
+.pending-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.session-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.badge-mode {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--accent-soft);
+  color: var(--accent);
+  letter-spacing: 0.03em;
+}
+
+.badge-role-small {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+}
+
+.session-progress {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+
+.session-date {
+  font-size: 11px;
+}
+
+.session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .mode-list {
@@ -999,23 +1103,37 @@ button.big-action small {
 </head>
 <body>
 
-  <!-- ===== Welcome ===== -->
-  <section id="view-welcome" class="view">
+  <!-- ===== Identity (una sola vez) ===== -->
+  <section id="view-identity" class="view">
     <header class="welcome-header">
       <h1>Simbionte QA</h1>
       <span class="badge-lab">Lab</span>
     </header>
-    <p class="muted">Modo libre: registra bugs sueltos sin seguir flow obligatorio, o pasa una audit matrix por bloque. Tus datos quedan en el navegador hasta que descargues el reporte.</p>
-
+    <p class="muted">Bienvenido. Antes de empezar, dime tu nombre. Solo te lo pido una vez — luego pasarás directo a elegir rol y modo.</p>
     <label class="field">
-      <span>Cliente</span>
-      <input type="text" id="clientName" placeholder="Acme Inc." autocomplete="off" />
+      <span>¿Quién eres?</span>
+      <input type="text" id="identityName" placeholder="Tu nombre" autocomplete="off" />
     </label>
+    <button id="btnSaveIdentity" class="primary big" disabled>Continuar</button>
+  </section>
 
-    <label class="field">
-      <span>Tu nombre</span>
-      <input type="text" id="testerName" placeholder="Tu nombre" autocomplete="off" />
-    </label>
+  <!-- ===== Welcome (cada sesión) ===== -->
+  <section id="view-welcome" class="view hidden">
+    <header class="welcome-header">
+      <h1>Simbionte QA</h1>
+      <span class="badge-lab">Lab</span>
+      <div class="identity-chip">
+        <span id="identityDisplay"></span>
+        <button id="btnChangeIdentity" class="ghost-icon" title="Cambiar nombre">✎</button>
+      </div>
+    </header>
+
+    <section id="pendingSessionsBlock" class="pending-block hidden">
+      <h3>Sesiones pendientes</h3>
+      <div id="pendingList" class="pending-list"></div>
+    </section>
+
+    <h3 id="newSessionHeading">Nueva sesión</h3>
 
     <label class="field">
       <span>Tu rol</span>
@@ -1036,25 +1154,16 @@ button.big-action small {
       <div id="modeList" class="mode-list">
         <div class="mode-option selected" data-mode="bugs">
           <div class="mode-title">🐛 Bug tickets</div>
-          <div class="mode-meta">Registra bugs sueltos. Cada uno se exporta como Markdown pegable en Linear/Notion.</div>
+          <div class="mode-meta">Registra bugs sueltos sin orden. Cada uno se exporta como Markdown pegable en Linear/Notion.</div>
         </div>
         <div class="mode-option" data-mode="audit">
           <div class="mode-title">📋 Audit matrix</div>
-          <div class="mode-meta">Recorre los 16 bloques marcando Pass / Fail / N/A por escenario. Bueno para verificación previa a demo.</div>
+          <div class="mode-meta">Recorre los bloques marcando Pass / Fail / N/A por escenario. Bueno para verificación previa a demo.</div>
         </div>
       </div>
     </div>
 
-    <div id="resumeBlock" class="resume hidden">
-      <strong>Sesión pendiente detectada.</strong>
-      <div class="resume-detail" id="resumeDetail"></div>
-      <div class="resume-actions">
-        <button id="btnResume" class="primary">Continuar</button>
-        <button id="btnDiscard" class="ghost">Descartar y empezar nueva</button>
-      </div>
-    </div>
-
-    <button id="btnStart" class="primary big" disabled>Empezar sesión</button>
+    <button id="btnStart" class="primary big" disabled>Empezar nueva sesión</button>
   </section>
 
   <!-- ===== Bug tickets view ===== -->
@@ -3199,32 +3308,84 @@ window.__QA_DATA = {
 //  - "bugs":  registrar bugs sueltos (CRUD lista), exportable como tickets MD pegables en Linear.
 //  - "audit": matriz por bloque/escenario con Pass/Fail/N/A + comentario.
 
-const STORAGE_KEY = "qa-lab-session";
+const KEY_IDENTITY = "qa-lab-identity";    // { name } — persistente
+const KEY_SESSIONS = "qa-lab-sessions";    // [{ id, role, mode, startedAt, completedAt, lastActiveAt, bugs, audit, currentBugId }]
+const KEY_CURRENT_ID = "qa-lab-current";   // sessionId activo (puede ser null)
 
 const $ = id => document.getElementById(id);
 
 // ===== State =====
-let state = {
-  client: "",
-  tester: "",
-  role: "",
-  mode: "bugs",
-  startedAt: null,
-  bugs: [],              // [{ id, title, severity, blockSlug, steps, expected, actual, screenshots, context, createdAt }]
-  audit: {},             // { blockSlug: { collapsed, scenarios: { idx: { result, comment } } } }
-  currentBugId: null,
-};
+let identity = { name: "" };              // persistente entre sesiones
+let session = newSessionTemplate();        // sesión activa (proxy a un elemento de sessions[])
+let sessions = [];                         // todas las sesiones, completadas y pendientes
+
+function newSessionTemplate() {
+  return {
+    id: uid(),
+    role: "",
+    mode: "bugs",
+    startedAt: null,
+    completedAt: null,
+    lastActiveAt: null,
+    bugs: [],
+    audit: {},
+    currentBugId: null,
+  };
+}
 
 // ===== Persistence =====
-async function saveState() {
-  await chrome.storage.local.set({ [STORAGE_KEY]: state });
+async function saveIdentity() {
+  await chrome.storage.local.set({ [KEY_IDENTITY]: identity });
 }
-async function loadState() {
-  const obj = await chrome.storage.local.get(STORAGE_KEY);
-  return obj[STORAGE_KEY] || null;
+async function loadIdentity() {
+  const obj = await chrome.storage.local.get(KEY_IDENTITY);
+  return obj[KEY_IDENTITY] || null;
 }
-async function clearState() {
-  await chrome.storage.local.remove(STORAGE_KEY);
+
+async function saveSession() {
+  if (!session?.id) return;
+  session.lastActiveAt = new Date().toISOString();
+  const idx = sessions.findIndex(s => s.id === session.id);
+  if (idx >= 0) sessions[idx] = session;
+  else sessions.push(session);
+  await chrome.storage.local.set({
+    [KEY_SESSIONS]: sessions,
+    [KEY_CURRENT_ID]: session.id,
+  });
+}
+async function loadSessions() {
+  const obj = await chrome.storage.local.get([KEY_SESSIONS, KEY_CURRENT_ID]);
+  return {
+    sessions: obj[KEY_SESSIONS] || [],
+    currentId: obj[KEY_CURRENT_ID] || null,
+  };
+}
+
+// Compatibilidad hacia atrás: si encontramos una sesión vieja en KEY_SESSION,
+// la migramos al nuevo modelo. Best-effort.
+async function migrateLegacyIfAny() {
+  const legacy = await chrome.storage.local.get("qa-lab-session");
+  const old = legacy["qa-lab-session"];
+  if (old && (old.bugs?.length || Object.keys(old.audit || {}).length)) {
+    if (old.tester && !identity.name) {
+      identity.name = old.tester;
+      await saveIdentity();
+    }
+    const migrated = {
+      id: uid(),
+      role: old.role || "",
+      mode: old.mode || "bugs",
+      startedAt: old.startedAt || new Date().toISOString(),
+      completedAt: null,
+      lastActiveAt: new Date().toISOString(),
+      bugs: old.bugs || [],
+      audit: old.audit || {},
+      currentBugId: null,
+    };
+    sessions.push(migrated);
+    await chrome.storage.local.set({ [KEY_SESSIONS]: sessions });
+    await chrome.storage.local.remove("qa-lab-session");
+  }
 }
 
 function uid() {
@@ -3232,14 +3393,111 @@ function uid() {
 }
 
 function show(viewId) {
-  for (const v of ["view-welcome", "view-bugs", "view-audit", "view-final"]) {
+  for (const v of ["view-identity", "view-welcome", "view-bugs", "view-audit", "view-final"]) {
     $(v).classList.toggle("hidden", v !== viewId);
   }
   window.scrollTo(0, 0);
 }
 
 function sessionLabel() {
-  return `${state.client} · ${state.tester} · ${state.role || "rol no definido"}`;
+  return `${identity.name || "—"} · ${session.role || "rol no definido"}`;
+}
+
+// ===== Identity / Welcome view helpers =====
+function showIdentityView() {
+  show("view-identity");
+  const input = $("identityName");
+  if (input) {
+    input.value = identity.name || "";
+    $("btnSaveIdentity").disabled = !input.value.trim();
+    setTimeout(() => input.focus(), 50);
+  }
+}
+
+function showWelcomeView() {
+  show("view-welcome");
+  $("identityDisplay").textContent = `Hola, ${identity.name}`;
+  renderPendingSessions();
+  // Reset el form de nueva sesión
+  session = newSessionTemplate();
+  $("roleSelect").value = "";
+  document.querySelectorAll(".mode-option").forEach(o => o.classList.toggle("selected", o.dataset.mode === "bugs"));
+  session.mode = "bugs";
+  updateStartButton();
+}
+
+function renderPendingSessions() {
+  const pending = sessions.filter(s => !s.completedAt);
+  const container = $("pendingList");
+  const block = $("pendingSessionsBlock");
+  if (!pending.length) {
+    block.classList.add("hidden");
+    return;
+  }
+  block.classList.remove("hidden");
+  container.innerHTML = "";
+  pending.sort((a, b) => (b.lastActiveAt || "").localeCompare(a.lastActiveAt || ""));
+  for (const s of pending) {
+    const modeLabel = s.mode === "bugs" ? "🐛 Bug tickets" : "📋 Audit matrix";
+    const bugsCount = s.bugs?.length || 0;
+    const auditCount = Object.values(s.audit || {}).reduce((acc, b) => acc + Object.keys(b.scenarios || {}).length, 0);
+    const progress = s.mode === "bugs"
+      ? `${bugsCount} bug${bugsCount === 1 ? "" : "s"}`
+      : `${auditCount} escenario${auditCount === 1 ? "" : "s"} marcado${auditCount === 1 ? "" : "s"}`;
+    const lastAt = (s.lastActiveAt || s.startedAt || "").slice(0, 16).replace("T", " ");
+    const div = document.createElement("div");
+    div.className = "session-item";
+    div.innerHTML = `
+      <div class="session-info">
+        <div class="session-meta">
+          <span class="badge-mode">${modeLabel}</span>
+          <span class="badge-role-small">${escapeHtml(s.role || "sin rol")}</span>
+        </div>
+        <div class="session-progress">${progress}</div>
+        <div class="session-date muted small">Última actividad: ${lastAt}</div>
+      </div>
+      <div class="session-actions">
+        <button class="btn-resume primary small" data-id="${s.id}">Continuar →</button>
+        <button class="btn-delete-session ghost small" data-id="${s.id}" title="Descartar">🗑</button>
+      </div>
+    `;
+    div.querySelector(".btn-resume").addEventListener("click", () => resumeSession(s.id));
+    div.querySelector(".btn-delete-session").addEventListener("click", e => {
+      e.stopPropagation();
+      deleteSession(s.id);
+    });
+    container.appendChild(div);
+  }
+}
+
+async function resumeSession(id) {
+  const s = sessions.find(x => x.id === id);
+  if (!s) return;
+  session = s;
+  await chrome.storage.local.set({ [KEY_CURRENT_ID]: session.id });
+  if (session.mode === "bugs") {
+    show("view-bugs");
+    renderBugsView();
+  } else {
+    show("view-audit");
+    renderAuditView();
+  }
+}
+
+async function deleteSession(id) {
+  if (!confirm("¿Descartar esta sesión sin exportar? Los bugs y screenshots se perderán.")) return;
+  sessions = sessions.filter(s => s.id !== id);
+  await chrome.storage.local.set({ [KEY_SESSIONS]: sessions });
+  // Si era la current, limpiar
+  const cur = await chrome.storage.local.get(KEY_CURRENT_ID);
+  if (cur[KEY_CURRENT_ID] === id) {
+    await chrome.storage.local.remove(KEY_CURRENT_ID);
+  }
+  renderPendingSessions();
+}
+
+function updateStartButton() {
+  $("btnStart").disabled = !session.role;
 }
 
 // ===== Block scenarios extraction =====
@@ -3302,40 +3560,9 @@ function renderModeSelector() {
     opt.addEventListener("click", () => {
       document.querySelectorAll(".mode-option").forEach(o => o.classList.remove("selected"));
       opt.classList.add("selected");
-      state.mode = opt.dataset.mode;
+      session.mode = opt.dataset.mode;
     });
   });
-}
-
-function updateStartButton() {
-  const ready = state.client.trim() && state.tester.trim() && state.role;
-  $("btnStart").disabled = !ready;
-}
-
-async function checkResume() {
-  const saved = await loadState();
-  if (saved && saved.startedAt && (saved.bugs?.length > 0 || Object.keys(saved.audit || {}).length > 0)) {
-    const bugsCount = saved.bugs?.length || 0;
-    const auditCount = Object.values(saved.audit || {}).reduce((acc, b) => {
-      return acc + Object.keys(b.scenarios || {}).length;
-    }, 0);
-    $("resumeDetail").textContent = `${saved.mode === "bugs" ? "Bug tickets" : "Audit matrix"} · ${saved.client} · ${bugsCount} bugs, ${auditCount} escenarios marcados`;
-    $("resumeBlock").classList.remove("hidden");
-    $("btnResume").onclick = () => {
-      state = saved;
-      if (state.mode === "bugs") {
-        show("view-bugs");
-        renderBugsView();
-      } else {
-        show("view-audit");
-        renderAuditView();
-      }
-    };
-    $("btnDiscard").onclick = async () => {
-      await clearState();
-      $("resumeBlock").classList.add("hidden");
-    };
-  }
 }
 
 // ===== Bugs view =====
@@ -3349,14 +3576,14 @@ function renderBugsView() {
 function renderBugList() {
   const list = $("bugList");
   list.innerHTML = "";
-  if (!state.bugs.length) {
+  if (!session.bugs.length) {
     list.innerHTML = '<div class="empty-state muted small">Aún no has registrado bugs. Pulsa "+ Nuevo" para empezar.</div>';
     return;
   }
-  for (const bug of state.bugs) {
+  for (const bug of session.bugs) {
     const div = document.createElement("div");
     div.className = "bug-item";
-    if (bug.id === state.currentBugId) div.classList.add("selected");
+    if (bug.id === session.currentBugId) div.classList.add("selected");
     const sev = bug.severity?.toLowerCase() || "p2";
     div.innerHTML = `
       <span class="sev ${sev}">${bug.severity || "P?"}</span>
@@ -3382,8 +3609,8 @@ function populateBlockDropdown() {
 }
 
 function openBugForm(bugId) {
-  state.currentBugId = bugId;
-  const bug = state.bugs.find(b => b.id === bugId);
+  session.currentBugId = bugId;
+  const bug = session.bugs.find(b => b.id === bugId);
   $("bugFormPane").classList.remove("hidden");
   if (bug) {
     $("bugFormTitle").textContent = "Editar bug";
@@ -3413,12 +3640,12 @@ function openBugForm(bugId) {
 
 function closeBugForm() {
   $("bugFormPane").classList.add("hidden");
-  state.currentBugId = null;
+  session.currentBugId = null;
   renderBugList();
 }
 
 function newBug() {
-  state.currentBugId = null;
+  session.currentBugId = null;
   openBugForm(null);
 }
 
@@ -3428,11 +3655,11 @@ async function saveBug() {
     alert("Pon al menos un título corto al bug.");
     return;
   }
-  let bug = state.bugs.find(b => b.id === state.currentBugId);
+  let bug = session.bugs.find(b => b.id === session.currentBugId);
   let isNew = false;
   if (!bug) {
     bug = { id: uid(), createdAt: new Date().toISOString(), screenshots: [] };
-    state.bugs.push(bug);
+    session.bugs.push(bug);
     isNew = true;
   }
   bug.title = title;
@@ -3461,8 +3688,8 @@ async function saveBug() {
       // ignore: no es bloqueante
     }
   }
-  state.currentBugId = bug.id;
-  await saveState();
+  session.currentBugId = bug.id;
+  await saveSession();
   if (isNew) {
     // Reabre el form para mostrar el screenshot auto si se capturó
     openBugForm(bug.id);
@@ -3472,11 +3699,11 @@ async function saveBug() {
 }
 
 function deleteCurrentBug() {
-  if (!state.currentBugId) return;
+  if (!session.currentBugId) return;
   if (!confirm("¿Eliminar este bug del reporte?")) return;
-  state.bugs = state.bugs.filter(b => b.id !== state.currentBugId);
-  state.currentBugId = null;
-  saveState();
+  session.bugs = session.bugs.filter(b => b.id !== session.currentBugId);
+  session.currentBugId = null;
+  saveSession();
   closeBugForm();
 }
 
@@ -3490,7 +3717,7 @@ async function captureScreenshotForBug() {
       alert(`No se pudo capturar: ${resp.error}`);
       return;
     }
-    let bug = state.bugs.find(b => b.id === state.currentBugId);
+    let bug = session.bugs.find(b => b.id === session.currentBugId);
     if (!bug) {
       // Crear bug efímero para asociar el screenshot (lo persiste cuando guarda)
       const title = $("bugTitle").value.trim() || "(sin título)";
@@ -3505,8 +3732,8 @@ async function captureScreenshotForBug() {
         screenshots: [],
         createdAt: new Date().toISOString(),
       };
-      state.bugs.push(bug);
-      state.currentBugId = bug.id;
+      session.bugs.push(bug);
+      session.currentBugId = bug.id;
     }
     bug.screenshots = bug.screenshots || [];
     bug.screenshots.push({
@@ -3519,7 +3746,7 @@ async function captureScreenshotForBug() {
     renderBugScreenshots(bug.screenshots);
     renderBugContext(bug.context);
     renderBugList();
-    await saveState();
+    await saveSession();
   } catch (err) {
     alert(`Error: ${err.message}`);
   } finally {
@@ -3545,11 +3772,11 @@ function renderBugScreenshots(screenshots) {
     });
     div.querySelector(".thumb-remove").addEventListener("click", e => {
       e.stopPropagation();
-      const bug = state.bugs.find(b => b.id === state.currentBugId);
+      const bug = session.bugs.find(b => b.id === session.currentBugId);
       if (!bug) return;
       bug.screenshots.splice(idx, 1);
       renderBugScreenshots(bug.screenshots);
-      saveState();
+      saveSession();
     });
     container.appendChild(div);
   });
@@ -3571,9 +3798,9 @@ function renderAuditView() {
     .sort((a, b) => a.number - b.number);
 
   // Inicializar audit state si vacío
-  if (!Object.keys(state.audit).length) {
+  if (!Object.keys(session.audit).length) {
     for (const b of blocks) {
-      state.audit[b.slug] = { collapsed: true, scenarios: {} };
+      session.audit[b.slug] = { collapsed: true, scenarios: {} };
     }
   }
 
@@ -3582,8 +3809,8 @@ function renderAuditView() {
 
   for (const block of blocks) {
     const scenarios = extractScenarios(block.body);
-    if (!state.audit[block.slug]) state.audit[block.slug] = { collapsed: true, scenarios: {} };
-    const auditBlock = state.audit[block.slug];
+    if (!session.audit[block.slug]) session.audit[block.slug] = { collapsed: true, scenarios: {} };
+    const auditBlock = session.audit[block.slug];
 
     const blockDiv = document.createElement("div");
     blockDiv.className = "audit-block" + (auditBlock.collapsed ? "" : " expanded");
@@ -3599,7 +3826,7 @@ function renderAuditView() {
     header.addEventListener("click", () => {
       auditBlock.collapsed = !auditBlock.collapsed;
       blockDiv.classList.toggle("expanded", !auditBlock.collapsed);
-      saveState();
+      saveSession();
       if (!auditBlock.collapsed) {
         // Scroll suave al primer escenario sin marcar al expandir
         setTimeout(() => {
@@ -3685,7 +3912,7 @@ function renderScenarioCard(block, s, auditBlock) {
         b.classList.toggle("selected", b.dataset.result === result)
       );
       updateAuditProgress();
-      saveState();
+      saveSession();
       // Auto-scroll al siguiente
       autoScrollToNextScenario(scDiv);
     });
@@ -3694,7 +3921,7 @@ function renderScenarioCard(block, s, auditBlock) {
   scDiv.querySelector(".scenario-comment").addEventListener("input", e => {
     if (!auditBlock.scenarios[s.n]) auditBlock.scenarios[s.n] = {};
     auditBlock.scenarios[s.n].comment = e.target.value;
-    saveState();
+    saveSession();
   });
 
   return scDiv;
@@ -3706,7 +3933,7 @@ function updateAuditProgress() {
   for (const b of blocks) {
     const scenarios = extractScenarios(b.body);
     total += scenarios.length;
-    const audit = state.audit[b.slug];
+    const audit = session.audit[b.slug];
     if (!audit) continue;
     let blockMarked = 0;
     for (const s of scenarios) {
@@ -3755,9 +3982,9 @@ function autoScrollToNextScenario(currentCard) {
       if (nextBlock) {
         if (!nextBlock.classList.contains("expanded")) {
           const slug = nextBlock.dataset.slug;
-          if (state.audit[slug]) state.audit[slug].collapsed = false;
+          if (session.audit[slug]) session.audit[slug].collapsed = false;
           nextBlock.classList.add("expanded");
-          saveState();
+          saveSession();
         }
         const cards = [...nextBlock.querySelectorAll(".scenario-card")];
         next = cards.find(c => !c.classList.contains("marked")) || cards[0] || nextBlock;
@@ -3772,11 +3999,11 @@ function autoScrollToNextScenario(currentCard) {
 // ===== Final / Export =====
 function showFinal() {
   show("view-final");
-  if (state.mode === "bugs") {
+  if (session.mode === "bugs") {
     const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
-    for (const b of state.bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
+    for (const b of session.bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
     $("finalSummary").innerHTML = `
-      <strong>${state.bugs.length}</strong> bug tickets registrados ·
+      <strong>${session.bugs.length}</strong> bug tickets registrados ·
       P0: ${counts.P0} · P1: ${counts.P1} · P2: ${counts.P2} · P3: ${counts.P3}
     `;
   } else {
@@ -3785,7 +4012,7 @@ function showFinal() {
     for (const b of blocks) {
       const scenarios = extractScenarios(b.body);
       total += scenarios.length;
-      const audit = state.audit[b.slug];
+      const audit = session.audit[b.slug];
       if (audit) {
         for (const k in audit.scenarios) {
           const r = audit.scenarios[k].result;
@@ -3803,20 +4030,23 @@ function showFinal() {
 }
 
 function buildReport() {
+  // Marcar la sesión como completada al exportar
+  if (!session.completedAt) session.completedAt = new Date().toISOString();
+  saveSession();
   const meta = {
-    client: state.client,
-    tester: state.tester,
-    role: state.role,
-    mode: state.mode,
-    startedAt: state.startedAt,
-    completedAt: new Date().toISOString(),
+    tester: identity.name,
+    role: session.role,
+    mode: session.mode,
+    sessionId: session.id,
+    startedAt: session.startedAt,
+    completedAt: session.completedAt,
     generatedFromSha: window.__QA_DATA?.generatedFromSha || "unknown",
   };
 
-  if (state.mode === "bugs") {
+  if (session.mode === "bugs") {
     return {
       meta,
-      bugs: state.bugs.map(b => ({
+      bugs: session.bugs.map(b => ({
         id: b.id,
         title: b.title,
         severity: b.severity,
@@ -3843,7 +4073,7 @@ function buildReport() {
   const auditReport = [];
   for (const b of blocks.sort((a, b) => a.number - b.number)) {
     const scenarios = extractScenarios(b.body);
-    const audit = state.audit[b.slug] || { scenarios: {} };
+    const audit = session.audit[b.slug] || { scenarios: {} };
     auditReport.push({
       block: b.title,
       slug: b.slug,
@@ -4209,24 +4439,52 @@ function escapeHtml(s) {
 // ===== Bootstrap =====
 async function init() {
   if (!window.__QA_DATA) {
-    document.body.innerHTML = "<p style='padding:20px;color:#c62828'>Error: qa-data.js no cargó. Ejecuta <code>node plugins/_build/generate-data.mjs</code> y recarga la extensión.</p>";
+    document.body.innerHTML =
+      "<p style='padding:20px;color:#c62828'>Error: qa-data.js no cargó. Ejecuta <code>node plugins/_build/generate-data.mjs</code> y recarga la extensión.</p>";
     return;
   }
 
-  renderModeSelector();
-  await checkResume();
+  // Cargar identity + sessions
+  const savedIdentity = await loadIdentity();
+  if (savedIdentity?.name) identity = savedIdentity;
+  const { sessions: loadedSessions } = await loadSessions();
+  sessions = loadedSessions;
+  await migrateLegacyIfAny();
 
-  $("clientName").addEventListener("input", e => { state.client = e.target.value; updateStartButton(); });
-  $("testerName").addEventListener("input", e => { state.tester = e.target.value; updateStartButton(); });
-  $("roleSelect").addEventListener("change", e => { state.role = e.target.value; updateStartButton(); });
+  // ===== Identity view bindings =====
+  $("identityName").addEventListener("input", e => {
+    $("btnSaveIdentity").disabled = !e.target.value.trim();
+  });
+  $("identityName").addEventListener("keydown", e => {
+    if (e.key === "Enter" && !$("btnSaveIdentity").disabled) {
+      $("btnSaveIdentity").click();
+    }
+  });
+  $("btnSaveIdentity").addEventListener("click", async () => {
+    identity.name = $("identityName").value.trim();
+    if (!identity.name) return;
+    await saveIdentity();
+    showWelcomeView();
+  });
+
+  // ===== Welcome bindings =====
+  $("btnChangeIdentity").addEventListener("click", showIdentityView);
+  renderModeSelector();
+  $("roleSelect").addEventListener("change", e => {
+    session.role = e.target.value;
+    updateStartButton();
+  });
 
   $("btnStart").addEventListener("click", async () => {
-    state.startedAt = new Date().toISOString();
-    state.bugs = [];
-    state.audit = {};
-    state.currentBugId = null;
-    await saveState();
-    if (state.mode === "bugs") {
+    // Nueva sesión a partir del template + valores del form
+    const newSession = newSessionTemplate();
+    newSession.role = $("roleSelect").value;
+    const selectedMode = document.querySelector(".mode-option.selected");
+    newSession.mode = selectedMode?.dataset.mode || "bugs";
+    newSession.startedAt = new Date().toISOString();
+    session = newSession;
+    await saveSession();
+    if (session.mode === "bugs") {
       show("view-bugs");
       renderBugsView();
     } else {
@@ -4235,35 +4493,47 @@ async function init() {
     }
   });
 
-  // Bugs view bindings
+  // ===== Bugs view bindings =====
   $("btnNewBug").addEventListener("click", newBug);
   $("btnSaveBug").addEventListener("click", saveBug);
   $("btnCancelBug").addEventListener("click", closeBugForm);
   $("btnDeleteBug").addEventListener("click", deleteCurrentBug);
   $("btnScreenshotBug").addEventListener("click", captureScreenshotForBug);
   $("btnFinishBugs").addEventListener("click", showFinal);
-  $("btnExitBugs").addEventListener("click", () => show("view-welcome"));
+  $("btnExitBugs").addEventListener("click", () => {
+    // Pausar: guarda sesión y vuelve a welcome (queda en pendientes)
+    saveSession();
+    showWelcomeView();
+  });
 
-  // Audit bindings
+  // ===== Audit bindings =====
   $("btnFinishAudit").addEventListener("click", showFinal);
-  $("btnExitAudit").addEventListener("click", () => show("view-welcome"));
+  $("btnExitAudit").addEventListener("click", () => {
+    saveSession();
+    showWelcomeView();
+  });
 
-  // Final
+  // ===== Final =====
   $("btnExportNotion").addEventListener("click", exportNotionBundle);
   $("btnExportJson").addEventListener("click", exportJson);
   $("btnExportMd").addEventListener("click", exportMd);
-  $("btnExportBoth").addEventListener("click", () => { exportJson(); setTimeout(exportMd, 300); });
-  $("btnNewSession").addEventListener("click", async () => {
-    await clearState();
-    state = { client: "", tester: "", role: "", mode: "bugs", startedAt: null, bugs: [], audit: {}, currentBugId: null };
-    $("clientName").value = "";
-    $("testerName").value = "";
-    $("roleSelect").value = "";
-    document.querySelectorAll(".mode-option").forEach(o => o.classList.remove("selected"));
-    document.querySelector('.mode-option[data-mode="bugs"]')?.classList.add("selected");
-    updateStartButton();
-    show("view-welcome");
+  $("btnExportBoth").addEventListener("click", () => {
+    exportJson();
+    setTimeout(exportMd, 300);
   });
+  $("btnNewSession").addEventListener("click", async () => {
+    // Tras exportar: la sesión actual queda marcada como completada (en buildReport),
+    // limpiar currentId y volver al welcome
+    await chrome.storage.local.remove(KEY_CURRENT_ID);
+    showWelcomeView();
+  });
+
+  // Initial view: identity si no tenemos nombre, welcome si sí
+  if (!identity.name) {
+    showIdentityView();
+  } else {
+    showWelcomeView();
+  }
 }
 
 init();
