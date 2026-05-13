@@ -928,11 +928,13 @@ window.__QA_DATA = {
         "P1",
         "P2"
       ],
-      "body": "\n# Flow QA — Cliente que aprueba (end-to-end)\n\n> Recorrido completo del cliente: desde recibir la invitación hasta poder revisar campañas y métricas. 18 pasos, ~45 min. Cubre el 100% de los escenarios P1 que el cliente toca.\n\n## Paso 1 — Recibir invitación y entrar\n**Bloque:** [Auth](../15-auth.md) — Escenario 1\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** email de invitación recibido.\n\n**Qué hacer:**\n1. Abre el email \"You've been invited\".\n2. Pulsa el link de invitación.\n3. Espera el redirect.\n\n**Qué validar:**\n- Aterrizas en `/` (Dashboard) directamente.\n- Ves el OnboardingChecklist con 4 pasos visibles.\n- Tu cuenta queda activa.\n\n**Si falla:** ver [Auth](../15-auth.md) sección 6 — \"El link de invitación expiró\".\n\n## Paso 2 — Ver el OnboardingChecklist\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P1\n**Pre:** acabas de entrar (paso 1).\n\n**Qué hacer:**\n1. Mira la card del checklist en el centro/lateral del Dashboard.\n2. Lee los 4 steps: Review your profile, Connect LinkedIn, Fill Playbook, Book a meeting.\n\n**Qué validar:**\n- Los 4 steps aparecen, ninguno marcado todavía.\n- El sidebar muestra solo: Dashboard, Content, Settings, Support (resto oculto durante onboarding).\n\n## Paso 3 — Step 1: completar tu perfil\n**Bloque:** [Settings](../11-settings.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** paso 2 OK.\n\n**Qué hacer:**\n1. Click \"Step 1 — Review your profile\" en el checklist.\n2. Te lleva a `/settings`.\n3. Rellena `full_name` (obligatorio). Opcional: avatar, idioma, zona horaria.\n4. Pulsa \"Save\".\n5. Vuelve a `/` (Dashboard).\n\n**Qué validar:**\n- El checkbox del Step 1 está marcado.\n- Tu nombre aparece arriba a la derecha en la app.\n\n**Si falla:** ver [Settings](../11-settings.md) sección 6 — \"Guardé el perfil pero el checklist no se marca\".\n\n## Paso 4 — Step 2: conectar LinkedIn\n**Bloque:** [Settings](../11-settings.md) — Escenario 2 + [Profiles](../08-profiles.md) — Escenario 1\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** tienes una cuenta LinkedIn activa.\n\n**Qué hacer:**\n1. Click \"Step 2 — Connect LinkedIn profiles\" en el checklist.\n2. En la sección \"Connected accounts\" pulsa \"Connect LinkedIn\".\n3. Autoriza en la ventana LinkedIn que se abre.\n4. Vuelves a Settings con badge \"Connected\".\n5. En la sección de profiles, añade los profiles que quieras gestionar (company + experts) pegando sus URLs LinkedIn.\n6. Pulsa \"Setup complete\".\n\n**Qué validar:**\n- Badge verde \"Connected\" junto a LinkedIn.\n- Profiles añadidos aparecen en la lista con badge \"Pending design\".\n- El checkbox del Step 2 queda marcado.\n\n**Si falla:** ver [Auth](../15-auth.md) sección 6 — \"LinkedIn devuelve `redirect_uri_mismatch`\".\n\n## Paso 5 — Step 3: rellenar Playbook — Company Info\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección Company)\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** Steps 1 y 2 marcados.\n\n**Qué hacer:**\n1. Click \"Step 3 — Fill Playbook\".\n2. Expande la sección \"Company Info + brand mood\".\n3. Rellena: `company_name`, `founding_year` (≤ año actual), `industry`, `acv` (≥ 0), `brand_voice`, `mission`, `value_prop`.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"Company Info\" marcado.\n- Si pones `founding_year` futuro o `acv` negativo: validación bloquea.\n\n## Paso 6 — Step 3: Playbook — Products\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección Products)\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Expande \"Products / Services\".\n2. Añade tu producto principal: `name`, `description`, `target_market`, `price_range`.\n3. (Opcional) productos secundarios.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"Products\" marcado.\n\n## Paso 7 — Step 3: Playbook — ICPs + Competidores\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección ICPs)\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Expande \"ICPs + Competitors\".\n2. Añade al menos 1 ICP: `role_title`, `responsibility`, `segment`, `geo`, `pains` (lista).\n3. Añade competidores conocidos.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"ICPs\" + \"Competitors\" marcados.\n- Paso 3 entero del onboarding queda completo.\n\n## Paso 8 — Step 4: reservar kickoff meeting\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 1 (paso 10 de Testing_Plan_QA)\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** superadmin ya configuró `kickoff_meeting_url`.\n\n**Qué hacer:**\n1. Click \"Step 4 — Book a meeting\".\n2. Pulsa \"Open booking page\" — abre Cal.com/Calendly en pestaña externa.\n3. (Reserva el slot que prefieras en esa pestaña).\n4. Vuelve a Simbionte.\n5. Pulsa \"I've booked my slot\".\n\n**Qué validar:**\n- Step 4 marcado.\n- Aparece card \"Congrats — you're all set up!\" con la promesa de 2-3 semanas / ~3 meses.\n- Pulsa \"Dismiss\" → desaparece el banner.\n\n**Si falla:** ver [Clients](../12-clients.md) sección 6 — \"El cliente dice que no puede reservar kickoff\".\n\n## Paso 9 — Ver Dashboard activo (post-onboarding)\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenarios 2-4\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** onboarding completado y dismissed.\n\n**Qué hacer:**\n1. Refresca `/`.\n2. Mira las secciones: \"Pending review\" (content), \"Conversaciones pendientes\", \"Performance overview\" (KPIs 3m).\n\n**Qué validar:**\n- Sidebar ahora muestra: Dashboard, Content, Campaigns, Analytics, Conversations, Resources, Playbook, Settings, Support.\n- \"Pending review\" muestra al menos 1 content (precondición del flow).\n- Counts cuadran con lo que verás en `/content`.\n\n## Paso 10 — Revisar y aprobar un content item\n**Bloque:** [Content](../02-content.md) — Escenario 5\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** hay un item en `pending_review`.\n\n**Qué hacer:**\n1. Click en la card \"Pending review\" del Dashboard (o entra a `/content`).\n2. Abre el item — verás copy, preview de diseño, profile, pillar, fecha programada.\n3. Decide: **Approve** o **Request changes** (con comentario).\n\n**Qué validar:**\n- Approve → estado pasa a `approved` (badge verde) y desaparece de \"Pending review\".\n- Request changes → comentario queda registrado y el item retrocede de estado.\n\n**Si falla:** ver [Content](../02-content.md) sección 6 — \"El estado no avanza tras Approve\".\n\n## Paso 11 — Aprobar AI Variables pendientes\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 3 *(⚫ frozen post-F7)*\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** post-F4, hay variables en `pending_approval`.\n\n**Qué hacer:**\n1. Entra a `/campaigns`.\n2. En la action bar, pulsa \"Variables\" (con badge naranja de count).\n3. Se abre la lista de variables (`[company_name]`, `[pain]`, etc.).\n4. Para cada una: lee descripción + ejemplos calculados → Approve o Request changes.\n\n**Qué validar:**\n- Variables aprobadas quedan disponibles para futuras campañas.\n- El badge desaparece cuando no quedan variables pendientes.\n\n## Paso 12 — Revisar y aprobar una campaña\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenarios 1 y 2 *(⚫ frozen post-F7)*\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** hay campaña en `pending_approval`, integración del cliente en estado `healthy`, AI Variables ya aprobadas.\n\n**Qué hacer:**\n1. `/campaigns` → click campaña con badge naranja.\n2. Lee los 3-5 mensajes de la secuencia: copy, canal, día de envío.\n3. Por mensaje: \"Approve\" o \"Request changes\".\n4. Cuando todos aprobados, pulsa \"Approve campaign\".\n\n**Qué validar:**\n- Mensajes pasan a `approved`.\n- Campaña entera pasa a `approved` (verde).\n- Scientist asignado recibe notificación.\n\n**Si falla:** ver [Campaigns](../05-campaigns.md) sección 6 — \"El botón 'Aprobar campaña' está gris\".\n\n## Paso 13 — Revisar conversaciones interested\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 1 *(⚫ frozen post-F6)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** hay al menos 1 conversación con tag `interested`.\n\n**Qué hacer:**\n1. Entra a `/conversations`. Default: filtro \"Interested\".\n2. Lista de conversaciones con nombre contacto, profile, last_message_preview.\n3. Click → ves el hilo completo.\n\n**Qué validar:**\n- Solo aparecen conversaciones `interested` (NO ves las `not_interested` o sin tag).\n- Mensajes en orden cronológico.\n\n## Paso 14 — Ver rendimiento últimos 3 meses\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** al menos 30 días de datos.\n\n**Qué hacer:**\n1. Entra a `/analytics`. Default: 3 meses.\n2. Mira cards: impresiones, interacciones, contactos generados, followers, posts.\n3. Mira \"Top posts\".\n4. Cambia periodo a 6m / 12m / custom range.\n\n**Qué validar:**\n- Métricas cambian al cambiar periodo.\n- Top posts coherentes (no posts futuros).\n- Si <30 días de datos: warning visible.\n\n## Paso 15 — Descargar un Resource\n**Bloque:** [Resources](../10-resources.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P3\n**Pre:** existe al menos 1 resource visible para tu cliente.\n\n**Qué hacer:**\n1. Entra a `/resources`.\n2. Pulsa \"Download\" en un resource.\n\n**Qué validar:**\n- Archivo se descarga correctamente.\n\n## Paso 16 — Buscar en Support\n**Bloque:** [Support](../16-support.md) — Escenarios 1 y 2\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Entra a `/support`.\n2. Busca una pregunta en el FAQ.\n3. (Opcional) envía un mensaje al equipo via \"Contact us\".\n\n**Qué validar:**\n- FAQ devuelve resultados relevantes.\n- Contact form muestra confirmación tras envío.\n\n## Paso 17 — Ajustar preferencias de notificaciones\n**Bloque:** [Settings](../11-settings.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/settings` → \"Notifications\".\n2. Toggle canales (email, in-app) y tipos (content_pending, mention, weekly_digest).\n\n**Qué validar:**\n- Cambios persisten al refrescar.\n\n## Paso 18 — Cerrar sesión\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout desde el menú.\n2. Intenta entrar a `/` directamente.\n\n**Qué validar:**\n- Te redirige a `/auth`.\n- No quedan datos sensibles en localStorage tras logout.\n",
+      "body": "\n# Flow QA — Cliente que aprueba (end-to-end)\n\n> Recorrido completo del cliente: desde recibir la invitación hasta poder revisar campañas y métricas. 18 pasos, ~45 min, agrupados en 4 fases. Cubre el 100% de los escenarios P1 que el cliente toca.\n\n## Fase 1 — Onboarding completo\n\nSub-flow obligatorio para clientes nuevos: aceptar invitación, completar tu perfil, conectar LinkedIn, rellenar el Playbook con la información de tu empresa, y reservar la kickoff meeting. Hasta que no completes los 4 steps del checklist, el resto de la plataforma queda restringido.\n\n## Paso 1 — Recibir invitación y entrar\n**Bloque:** [Auth](../15-auth.md) — Escenario 1\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** email de invitación recibido.\n\n**Qué hacer:**\n1. Abre el email \"You've been invited\".\n2. Pulsa el link de invitación.\n3. Espera el redirect.\n\n**Qué validar:**\n- Aterrizas en `/` (Dashboard) directamente.\n- Ves el OnboardingChecklist con 4 pasos visibles.\n- Tu cuenta queda activa.\n\n**Si falla:** ver [Auth](../15-auth.md) sección 6 — \"El link de invitación expiró\".\n\n## Paso 2 — Ver el OnboardingChecklist\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P1\n**Pre:** acabas de entrar (paso 1).\n\n**Qué hacer:**\n1. Mira la card del checklist en el centro/lateral del Dashboard.\n2. Lee los 4 steps: Review your profile, Connect LinkedIn, Fill Playbook, Book a meeting.\n\n**Qué validar:**\n- Los 4 steps aparecen, ninguno marcado todavía.\n- El sidebar muestra solo: Dashboard, Content, Settings, Support (resto oculto durante onboarding).\n\n## Paso 3 — Step 1: completar tu perfil\n**Bloque:** [Settings](../11-settings.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** paso 2 OK.\n\n**Qué hacer:**\n1. Click \"Step 1 — Review your profile\" en el checklist.\n2. Te lleva a `/settings`.\n3. Rellena `full_name` (obligatorio). Opcional: avatar, idioma, zona horaria.\n4. Pulsa \"Save\".\n5. Vuelve a `/` (Dashboard).\n\n**Qué validar:**\n- El checkbox del Step 1 está marcado.\n- Tu nombre aparece arriba a la derecha en la app.\n\n**Si falla:** ver [Settings](../11-settings.md) sección 6 — \"Guardé el perfil pero el checklist no se marca\".\n\n## Paso 4 — Step 2: conectar LinkedIn\n**Bloque:** [Settings](../11-settings.md) — Escenario 2 + [Profiles](../08-profiles.md) — Escenario 1\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** tienes una cuenta LinkedIn activa.\n\n**Qué hacer:**\n1. Click \"Step 2 — Connect LinkedIn profiles\" en el checklist.\n2. En la sección \"Connected accounts\" pulsa \"Connect LinkedIn\".\n3. Autoriza en la ventana LinkedIn que se abre.\n4. Vuelves a Settings con badge \"Connected\".\n5. En la sección de profiles, añade los profiles que quieras gestionar (company + experts) pegando sus URLs LinkedIn.\n6. Pulsa \"Setup complete\".\n\n**Qué validar:**\n- Badge verde \"Connected\" junto a LinkedIn.\n- Profiles añadidos aparecen en la lista con badge \"Pending design\".\n- El checkbox del Step 2 queda marcado.\n\n**Si falla:** ver [Auth](../15-auth.md) sección 6 — \"LinkedIn devuelve `redirect_uri_mismatch`\".\n\n## Paso 5 — Step 3: rellenar Playbook — Company Info\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección Company)\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** Steps 1 y 2 marcados.\n\n**Qué hacer:**\n1. Click \"Step 3 — Fill Playbook\".\n2. Expande la sección \"Company Info + brand mood\".\n3. Rellena: `company_name`, `founding_year` (≤ año actual), `industry`, `acv` (≥ 0), `brand_voice`, `mission`, `value_prop`.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"Company Info\" marcado.\n- Si pones `founding_year` futuro o `acv` negativo: validación bloquea.\n\n## Paso 6 — Step 3: Playbook — Products\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección Products)\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Expande \"Products / Services\".\n2. Añade tu producto principal: `name`, `description`, `target_market`, `price_range`.\n3. (Opcional) productos secundarios.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"Products\" marcado.\n\n## Paso 7 — Step 3: Playbook — ICPs + Competidores\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 1 (sub-sección ICPs)\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Expande \"ICPs + Competitors\".\n2. Añade al menos 1 ICP: `role_title`, `responsibility`, `segment`, `geo`, `pains` (lista).\n3. Añade competidores conocidos.\n4. Save.\n\n**Qué validar:**\n- Sub-checkbox \"ICPs\" + \"Competitors\" marcados.\n- Paso 3 entero del onboarding queda completo.\n\n## Paso 8 — Step 4: reservar kickoff meeting\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 1 (paso 10 de Testing_Plan_QA)\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** superadmin ya configuró `kickoff_meeting_url`.\n\n**Qué hacer:**\n1. Click \"Step 4 — Book a meeting\".\n2. Pulsa \"Open booking page\" — abre Cal.com/Calendly en pestaña externa.\n3. (Reserva el slot que prefieras en esa pestaña).\n4. Vuelve a Simbionte.\n5. Pulsa \"I've booked my slot\".\n\n**Qué validar:**\n- Step 4 marcado.\n- Aparece card \"Congrats — you're all set up!\" con la promesa de 2-3 semanas / ~3 meses.\n- Pulsa \"Dismiss\" → desaparece el banner.\n\n**Si falla:** ver [Clients](../12-clients.md) sección 6 — \"El cliente dice que no puede reservar kickoff\".\n\n## Fase 2 — Actividad recurrente: revisar y aprobar\n\nTras el onboarding, esta es la actividad habitual: revisar los contenidos pendientes en tu Dashboard, aprobar (o pedir cambios) y validar las AI Variables y campañas que el equipo Simbionte ha preparado para ti.\n\n## Paso 9 — Ver Dashboard activo (post-onboarding)\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenarios 2-4\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** onboarding completado y dismissed.\n\n**Qué hacer:**\n1. Refresca `/`.\n2. Mira las secciones: \"Pending review\" (content), \"Conversaciones pendientes\", \"Performance overview\" (KPIs 3m).\n\n**Qué validar:**\n- Sidebar ahora muestra: Dashboard, Content, Campaigns, Analytics, Conversations, Resources, Playbook, Settings, Support.\n- \"Pending review\" muestra al menos 1 content (precondición del flow).\n- Counts cuadran con lo que verás en `/content`.\n\n## Paso 10 — Revisar y aprobar un content item\n**Bloque:** [Content](../02-content.md) — Escenario 5\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** hay un item en `pending_review`.\n\n**Qué hacer:**\n1. Click en la card \"Pending review\" del Dashboard (o entra a `/content`).\n2. Abre el item — verás copy, preview de diseño, profile, pillar, fecha programada.\n3. Decide: **Approve** o **Request changes** (con comentario).\n\n**Qué validar:**\n- Approve → estado pasa a `approved` (badge verde) y desaparece de \"Pending review\".\n- Request changes → comentario queda registrado y el item retrocede de estado.\n\n**Si falla:** ver [Content](../02-content.md) sección 6 — \"El estado no avanza tras Approve\".\n\n## Paso 11 — Aprobar AI Variables pendientes\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 3 *(⚫ frozen post-F7)*\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** post-F4, hay variables en `pending_approval`.\n\n**Qué hacer:**\n1. Entra a `/campaigns`.\n2. En la action bar, pulsa \"Variables\" (con badge naranja de count).\n3. Se abre la lista de variables (`[company_name]`, `[pain]`, etc.).\n4. Para cada una: lee descripción + ejemplos calculados → Approve o Request changes.\n\n**Qué validar:**\n- Variables aprobadas quedan disponibles para futuras campañas.\n- El badge desaparece cuando no quedan variables pendientes.\n\n## Paso 12 — Revisar y aprobar una campaña\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenarios 1 y 2 *(⚫ frozen post-F7)*\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** hay campaña en `pending_approval`, integración del cliente en estado `healthy`, AI Variables ya aprobadas.\n\n**Qué hacer:**\n1. `/campaigns` → click campaña con badge naranja.\n2. Lee los 3-5 mensajes de la secuencia: copy, canal, día de envío.\n3. Por mensaje: \"Approve\" o \"Request changes\".\n4. Cuando todos aprobados, pulsa \"Approve campaign\".\n\n**Qué validar:**\n- Mensajes pasan a `approved`.\n- Campaña entera pasa a `approved` (verde).\n- Scientist asignado recibe notificación.\n\n**Si falla:** ver [Campaigns](../05-campaigns.md) sección 6 — \"El botón 'Aprobar campaña' está gris\".\n\n## Fase 3 — Inbox de conversaciones y métricas\n\nLas respuestas de las campañas que has aprobado entran al inbox; aquí lees las marcadas como interested y consultas tu rendimiento en Analytics.\n\n## Paso 13 — Revisar conversaciones interested\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 1 *(⚫ frozen post-F6)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** hay al menos 1 conversación con tag `interested`.\n\n**Qué hacer:**\n1. Entra a `/conversations`. Default: filtro \"Interested\".\n2. Lista de conversaciones con nombre contacto, profile, last_message_preview.\n3. Click → ves el hilo completo.\n\n**Qué validar:**\n- Solo aparecen conversaciones `interested` (NO ves las `not_interested` o sin tag).\n- Mensajes en orden cronológico.\n\n## Paso 14 — Ver rendimiento últimos 3 meses\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** al menos 30 días de datos.\n\n**Qué hacer:**\n1. Entra a `/analytics`. Default: 3 meses.\n2. Mira cards: impresiones, interacciones, contactos generados, followers, posts.\n3. Mira \"Top posts\".\n4. Cambia periodo a 6m / 12m / custom range.\n\n**Qué validar:**\n- Métricas cambian al cambiar periodo.\n- Top posts coherentes (no posts futuros).\n- Si <30 días de datos: warning visible.\n\n## Fase 4 — Recursos, ayuda, configuración y cierre\n\nAcciones secundarias: descargar recursos compartidos por el equipo, buscar ayuda en Support, ajustar tus preferencias de notificación y cerrar sesión.\n\n## Paso 15 — Descargar un Resource\n**Bloque:** [Resources](../10-resources.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P3\n**Pre:** existe al menos 1 resource visible para tu cliente.\n\n**Qué hacer:**\n1. Entra a `/resources`.\n2. Pulsa \"Download\" en un resource.\n\n**Qué validar:**\n- Archivo se descarga correctamente.\n\n## Paso 16 — Buscar en Support\n**Bloque:** [Support](../16-support.md) — Escenarios 1 y 2\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Entra a `/support`.\n2. Busca una pregunta en el FAQ.\n3. (Opcional) envía un mensaje al equipo via \"Contact us\".\n\n**Qué validar:**\n- FAQ devuelve resultados relevantes.\n- Contact form muestra confirmación tras envío.\n\n## Paso 17 — Ajustar preferencias de notificaciones\n**Bloque:** [Settings](../11-settings.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/settings` → \"Notifications\".\n2. Toggle canales (email, in-app) y tipos (content_pending, mention, weekly_digest).\n\n**Qué validar:**\n- Cambios persisten al refrescar.\n\n## Paso 18 — Cerrar sesión\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout desde el menú.\n2. Intenta entrar a `/` directamente.\n\n**Qué validar:**\n- Te redirige a `/auth`.\n- No quedan datos sensibles en localStorage tras logout.\n",
       "steps": [
         {
           "n": 1,
           "title": "Recibir invitación y entrar",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 1",
@@ -944,6 +946,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Ver el OnboardingChecklist",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 1",
@@ -955,6 +959,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Step 1: completar tu perfil",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 1",
@@ -966,6 +972,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Step 2: conectar LinkedIn",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 2 + [Profiles](../08-profiles.md) — Escenario 1",
@@ -977,6 +985,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Step 3: rellenar Playbook — Company Info",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Playbook",
           "blockHref": "../09-playbook.md",
           "scenario": "Escenario 1 (sub-sección Company)",
@@ -988,6 +998,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Step 3: Playbook — Products",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Playbook",
           "blockHref": "../09-playbook.md",
           "scenario": "Escenario 1 (sub-sección Products)",
@@ -999,6 +1011,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Step 3: Playbook — ICPs + Competidores",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Playbook",
           "blockHref": "../09-playbook.md",
           "scenario": "Escenario 1 (sub-sección ICPs)",
@@ -1010,6 +1024,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Step 4: reservar kickoff meeting",
+          "phaseNumber": 1,
+          "phaseTitle": "Onboarding completo",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 1 (paso 10 de Testing_Plan_QA)",
@@ -1021,6 +1037,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Ver Dashboard activo (post-onboarding)",
+          "phaseNumber": 2,
+          "phaseTitle": "Actividad recurrente: revisar y aprobar",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenarios 2-4",
@@ -1032,6 +1050,8 @@ window.__QA_DATA = {
         {
           "n": 10,
           "title": "Revisar y aprobar un content item",
+          "phaseNumber": 2,
+          "phaseTitle": "Actividad recurrente: revisar y aprobar",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 5",
@@ -1043,6 +1063,8 @@ window.__QA_DATA = {
         {
           "n": 11,
           "title": "Aprobar AI Variables pendientes",
+          "phaseNumber": 2,
+          "phaseTitle": "Actividad recurrente: revisar y aprobar",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "Escenario 3 *(⚫ frozen post-F7)*",
@@ -1054,6 +1076,8 @@ window.__QA_DATA = {
         {
           "n": 12,
           "title": "Revisar y aprobar una campaña",
+          "phaseNumber": 2,
+          "phaseTitle": "Actividad recurrente: revisar y aprobar",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "Escenarios 1 y 2 *(⚫ frozen post-F7)*",
@@ -1065,6 +1089,8 @@ window.__QA_DATA = {
         {
           "n": 13,
           "title": "Revisar conversaciones interested",
+          "phaseNumber": 3,
+          "phaseTitle": "Inbox de conversaciones y métricas",
           "blockName": "Conversations",
           "blockHref": "../07-conversations.md",
           "scenario": "Escenario 1 *(⚫ frozen post-F6)*",
@@ -1076,6 +1102,8 @@ window.__QA_DATA = {
         {
           "n": 14,
           "title": "Ver rendimiento últimos 3 meses",
+          "phaseNumber": 3,
+          "phaseTitle": "Inbox de conversaciones y métricas",
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenario 1",
@@ -1087,6 +1115,8 @@ window.__QA_DATA = {
         {
           "n": 15,
           "title": "Descargar un Resource",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos, ayuda, configuración y cierre",
           "blockName": "Resources",
           "blockHref": "../10-resources.md",
           "scenario": "Escenario 1",
@@ -1098,6 +1128,8 @@ window.__QA_DATA = {
         {
           "n": 16,
           "title": "Buscar en Support",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos, ayuda, configuración y cierre",
           "blockName": "Support",
           "blockHref": "../16-support.md",
           "scenario": "Escenarios 1 y 2",
@@ -1109,6 +1141,8 @@ window.__QA_DATA = {
         {
           "n": 17,
           "title": "Ajustar preferencias de notificaciones",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos, ayuda, configuración y cierre",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 4",
@@ -1120,6 +1154,8 @@ window.__QA_DATA = {
         {
           "n": 18,
           "title": "Cerrar sesión",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos, ayuda, configuración y cierre",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -1127,6 +1163,54 @@ window.__QA_DATA = {
           "priority": null,
           "precondition": null,
           "raw": "## Paso 18 — Cerrar sesión\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout desde el menú.\n2. Intenta entrar a `/` directamente.\n\n**Qué validar:**\n- Te redirige a `/auth`.\n- No quedan datos sensibles en localStorage tras logout."
+        }
+      ],
+      "phases": [
+        {
+          "number": 1,
+          "title": "Onboarding completo",
+          "description": "Sub-flow obligatorio para clientes nuevos: aceptar invitación, completar tu perfil, conectar LinkedIn, rellenar el Playbook con la información de tu empresa, y reservar la kickoff meeting. Hasta que no completes los 4 steps del checklist, el resto de la plataforma queda restringido.",
+          "stepNumbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "number": 2,
+          "title": "Actividad recurrente: revisar y aprobar",
+          "description": "Tras el onboarding, esta es la actividad habitual: revisar los contenidos pendientes en tu Dashboard, aprobar (o pedir cambios) y validar las AI Variables y campañas que el equipo Simbionte ha preparado para ti.",
+          "stepNumbers": [
+            9,
+            10,
+            11,
+            12
+          ]
+        },
+        {
+          "number": 3,
+          "title": "Inbox de conversaciones y métricas",
+          "description": "Las respuestas de las campañas que has aprobado entran al inbox; aquí lees las marcadas como interested y consultas tu rendimiento en Analytics.",
+          "stepNumbers": [
+            13,
+            14
+          ]
+        },
+        {
+          "number": 4,
+          "title": "Recursos, ayuda, configuración y cierre",
+          "description": "Acciones secundarias: descargar recursos compartidos por el equipo, buscar ayuda en Support, ajustar tus preferencias de notificación y cerrar sesión.",
+          "stepNumbers": [
+            15,
+            16,
+            17,
+            18
+          ]
         }
       ]
     },
@@ -1157,6 +1241,8 @@ window.__QA_DATA = {
         {
           "n": 1,
           "title": "Entrar con magic link",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 2",
@@ -1168,6 +1254,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Ver Dashboard de commenter",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 2 + 3",
@@ -1179,6 +1267,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Abrir content item pero NO poder aprobar",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 5 (variante commenter)",
@@ -1190,6 +1280,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Comentar en un content item",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "feature comments",
@@ -1201,6 +1293,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Abrir campaña: solo lectura",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "Escenario 1 (variante commenter) *(⚫ frozen)*",
@@ -1212,6 +1306,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Ver conversaciones (solo lectura)",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Conversations",
           "blockHref": "../07-conversations.md",
           "scenario": "Escenario 1 *(⚫ frozen)*",
@@ -1223,6 +1319,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Ver Analytics",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenario 1",
@@ -1234,6 +1332,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Verificar que NO puedes editar Playbook",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Playbook",
           "blockHref": "../09-playbook.md",
           "scenario": "restricciones de rol",
@@ -1245,6 +1345,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Ajustar tu perfil",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 1",
@@ -1256,6 +1358,8 @@ window.__QA_DATA = {
         {
           "n": 10,
           "title": "Logout",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -1264,7 +1368,8 @@ window.__QA_DATA = {
           "precondition": null,
           "raw": "## Paso 10 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`."
         }
-      ]
+      ],
+      "phases": []
     },
     {
       "file": "03-scientist.md",
@@ -1289,11 +1394,13 @@ window.__QA_DATA = {
         "P1",
         "P2"
       ],
-      "body": "\n# Flow QA — Scientist (end-to-end)\n\n> El productor de contenido y diseñador de campañas. 22 pasos, ~60 min. Cubre el ciclo completo: crear content → diseñar → enviar a cliente → recoger feedback → escalar a campañas → monitorizar respuestas.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar de scientist: ve Content, Campaigns, Conversations, Analytics, Clients (lectura), Playbook, etc.\n\n## Paso 2 — Ver workload en Dashboard\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 5\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Mira las cards: \"X copies in progress\", \"Y design pending\", \"Z internal review\".\n\n**Qué validar:**\n- Counts solo de tus clientes asignados.\n- Click en una card filtra `/content` por ese estado.\n\n## Paso 3 — Revisar Playbook del cliente\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 2 (lectura/edición)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Si trabajas para un cliente concreto, abre su Playbook.\n2. Comprueba ICPs, products, brand_voice.\n\n**Qué validar:**\n- Acceso al playbook de TUS clientes asignados, no otros.\n\n## Paso 4 — Crear un content item nuevo\n**Bloque:** [Content](../02-content.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/content` → \"New Content\".\n2. Selecciona: cliente, profile (company/expert), pillar (Context/ICP messaging/Experiences), publication date, language.\n3. Add.\n\n**Qué validar:**\n- Item creado en `copy_in_progress`.\n- Aparece en tu lista filtrada.\n\n## Paso 5 — Escribir copy y enviar a design pending\n**Bloque:** [Content](../02-content.md) — Escenario 2\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Abre el item creado.\n2. Escribe copy en el editor.\n3. Activa auto-traducción ES y edita si hace falta.\n4. Adjunta referencias científicas o media si aplica.\n5. \"Mark copy completed\".\n\n**Qué validar:**\n- Estado pasa a `copy_completed`.\n- Item aparece en cola `design_pending` para el designer.\n\n## Paso 6 — Crear segundo content item para reciclar luego\n**Bloque:** [Content](../02-content.md) — Escenario 1 (repetición)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Crea otro content item.\n2. Marca un profile distinto (un experto si el primero era company).\n\n**Qué validar:**\n- Aparece en la lista junto al primero.\n\n## Paso 7 — Esperar al designer (simulado: cambiar rol o avanzar manualmente)\n**Bloque:** [Content](../02-content.md) — interaction con designer\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. (Si haces QA aislada) — desde superadmin marca el item como `design_completed` manualmente.\n2. (Si haces QA conjunta) — espera a que el designer mueva el item.\n\n**Qué validar:**\n- Item llega a `design_completed`.\n- Te llega notificación de scientist.\n\n## Paso 8 — Revisión interna del item\n**Bloque:** [Content](../02-content.md) — Escenario 4\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** item en `design_completed`.\n\n**Qué hacer:**\n1. Abre el item.\n2. Verifica que copy + diseño están coherentes.\n3. Mover a `internal_review` → revisar → mover a `pending_review`.\n\n**Qué validar:**\n- Estado avanza correctamente.\n- Notificación al client_approver sale.\n\n## Paso 9 — Recibir Request Changes del cliente y resolver\n**Bloque:** [Content](../02-content.md) — Escenario 5 (vista scientist)\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** el client_approver hizo \"Request changes\" con comentario (paso del flow client-approver).\n\n**Qué hacer:**\n1. Recibes notificación.\n2. Abre el item — lees el comentario del cliente.\n3. Ajusta el copy.\n4. Vuelve a mover a `pending_review`.\n\n**Qué validar:**\n- El comentario del cliente está visible.\n- Item vuelve correctamente a `pending_review` tras tu update.\n\n## Paso 10 — Programar el item aprobado\n**Bloque:** [Content](../02-content.md) — Escenario 6\n**Tiempo:** 1 min — **Prioridad:** P2\n**Pre:** item en `approved` (cliente lo aprobó).\n\n**Qué hacer:**\n1. Abre el item → \"Schedule\".\n2. Fecha y hora.\n\n**Qué validar:**\n- Estado `scheduled`.\n- `scheduled_at` no en el pasado.\n\n## Paso 11 — Reciclar un post publicado\n**Bloque:** [Content](../02-content.md) — Escenario 8\n**Tiempo:** 2 min — **Prioridad:** P3\n**Pre:** existe un post en `published` con buen rendimiento.\n\n**Qué hacer:**\n1. Abre el post.\n2. \"Recycle to company\" (si era expert) o duplicar.\n\n**Qué validar:**\n- Nuevo content item creado con `recycled_from_id`.\n- Copy pre-rellenado.\n\n## Paso 12 — Crear una campaña (post-F5)\n**Bloque:** [Campaigns](../05-campaigns.md) — flujo creación *(⚫ frozen)*\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/campaigns` → \"New campaign\".\n2. Selecciona cliente, ICPs, canales, pillar, source (Enginy/Lemlist/manual).\n3. Define 3-5 mensajes en la secuencia con delays.\n4. Inserta AI Variables.\n5. Save draft.\n\n**Qué validar:**\n- Campaña creada en estado `draft`.\n- Aparece en lista filtrada por status `draft`.\n\n## Paso 13 — Enviar campaña a aprobación del cliente\n**Bloque:** [Campaigns](../05-campaigns.md) — submit for approval *(⚫ frozen)*\n**Tiempo:** 1 min — **Prioridad:** P1\n**Pre:** campaña draft completa, todas las variables usadas están `approved`.\n\n**Qué hacer:**\n1. En el detalle → \"Submit for approval\".\n\n**Qué validar:**\n- Estado pasa a `pending_approval`.\n- Si alguna variable no está aprobada: error claro indicando cuál.\n\n## Paso 14 — Iterar una campaña (v2)\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 6 *(⚫ frozen)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** campaña v1 ya en `completed` o `running`.\n\n**Qué hacer:**\n1. Abre la campaña v1.\n2. \"Iterate\" → duplica como v2.\n3. Modifica copy/variables.\n4. Submit.\n\n**Qué validar:**\n- v2 tiene `parent_id = v1.id`.\n- UI muestra \"iteration of <v1_name>\".\n\n## Paso 15 — Monitorizar KPIs de campaña en marcha\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 4 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** campaña en `running` con al menos algunos envíos.\n\n**Qué hacer:**\n1. Abre la campaña.\n2. Mira KPIs: `total_sent`, `total_replied`, `reply_rate`.\n\n**Qué validar:**\n- Datos actualizados (sync 15 min).\n- Click \"View replies\" lleva a Conversations filtrado.\n\n## Paso 16 — Gestionar conversaciones del cliente\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 2 *(⚫ frozen)*\n**Tiempo:** 4 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/conversations`.\n2. Ves TODAS las conversaciones del cliente (no solo `interested`).\n3. Para cada nueva: lee → asigna tag (`interested`, `not_interested`, `needs_follow_up`).\n\n**Qué validar:**\n- Etiquetas se persisten.\n- Si pones `interested`, la conversación aparece para el client_approver.\n\n## Paso 17 — Responder desde Simbionte\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 3 *(⚫ frozen post-F6)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** integración healthy.\n\n**Qué hacer:**\n1. Abre una conversación.\n2. Editor de reply al final → escribe → Send.\n\n**Qué validar:**\n- Reply aparece como outgoing en el hilo.\n- Estado pasa \"Sending → Sent → Delivered\" según webhooks.\n\n## Paso 18 — Bulk action en conversaciones\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 5 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Selecciona varias conversations.\n2. Bulk: tag, archive, mark as read.\n\n**Qué validar:**\n- Acción aplicada a todas seleccionadas atómicamente.\n\n## Paso 19 — Comparar profiles en Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenarios 1 y 3\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Cambia profile (company → expert → otro experto).\n3. (Si superadmin/marketing también) compara con benchmarks sector.\n\n**Qué validar:**\n- Métricas distintas por profile.\n- Datos del período aplicado correctamente.\n\n## Paso 20 — Ver campaign funnel (post-F7)\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 6 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics` → sección Campaign performance.\n\n**Qué validar:**\n- Embudo: contactos → respondieron → interesados.\n- Coherente con counts de Conversations.\n\n## Paso 21 — Ajustar notification preferences\n**Bloque:** [Settings](../11-settings.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/settings` → Notifications.\n2. Activa \"When client requests changes\" y \"When campaign approved\".\n\n**Qué validar:**\n- Próximas notifications respetan tus elecciones.\n\n## Paso 22 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Cache TanStack Query limpiada al logout (no datos sensibles en localStorage).\n",
+      "body": "\n# Flow QA — Scientist (end-to-end)\n\n> El productor de contenido y diseñador de campañas. 22 pasos, ~60 min, agrupados en 5 fases. Cubre el ciclo completo: crear content → diseñar → enviar a cliente → recoger feedback → escalar a campañas → monitorizar respuestas.\n\n## Fase 1 — Inicio de sesión y workload\n\nLogin, revisar Dashboard de tareas pendientes y consultar el Playbook del cliente que vas a tratar.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar de scientist: ve Content, Campaigns, Conversations, Analytics, Clients (lectura), Playbook, etc.\n\n## Paso 2 — Ver workload en Dashboard\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 5\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Mira las cards: \"X copies in progress\", \"Y design pending\", \"Z internal review\".\n\n**Qué validar:**\n- Counts solo de tus clientes asignados.\n- Click en una card filtra `/content` por ese estado.\n\n## Paso 3 — Revisar Playbook del cliente\n**Bloque:** [Playbook](../09-playbook.md) — Escenario 2 (lectura/edición)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Si trabajas para un cliente concreto, abre su Playbook.\n2. Comprueba ICPs, products, brand_voice.\n\n**Qué validar:**\n- Acceso al playbook de TUS clientes asignados, no otros.\n\n## Fase 2 — Crear y procesar contenido LinkedIn\n\nSub-flow completo de producción: crear item → escribir copy → esperar al designer → internal review → enviar a cliente → resolver feedback → programar → reciclar exitosos.\n\n## Paso 4 — Crear un content item nuevo\n**Bloque:** [Content](../02-content.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/content` → \"New Content\".\n2. Selecciona: cliente, profile (company/expert), pillar (Context/ICP messaging/Experiences), publication date, language.\n3. Add.\n\n**Qué validar:**\n- Item creado en `copy_in_progress`.\n- Aparece en tu lista filtrada.\n\n## Paso 5 — Escribir copy y enviar a design pending\n**Bloque:** [Content](../02-content.md) — Escenario 2\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Abre el item creado.\n2. Escribe copy en el editor.\n3. Activa auto-traducción ES y edita si hace falta.\n4. Adjunta referencias científicas o media si aplica.\n5. \"Mark copy completed\".\n\n**Qué validar:**\n- Estado pasa a `copy_completed`.\n- Item aparece en cola `design_pending` para el designer.\n\n## Paso 6 — Crear segundo content item para reciclar luego\n**Bloque:** [Content](../02-content.md) — Escenario 1 (repetición)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Crea otro content item.\n2. Marca un profile distinto (un experto si el primero era company).\n\n**Qué validar:**\n- Aparece en la lista junto al primero.\n\n## Paso 7 — Esperar al designer (simulado: cambiar rol o avanzar manualmente)\n**Bloque:** [Content](../02-content.md) — interaction con designer\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. (Si haces QA aislada) — desde superadmin marca el item como `design_completed` manualmente.\n2. (Si haces QA conjunta) — espera a que el designer mueva el item.\n\n**Qué validar:**\n- Item llega a `design_completed`.\n- Te llega notificación de scientist.\n\n## Paso 8 — Revisión interna del item\n**Bloque:** [Content](../02-content.md) — Escenario 4\n**Tiempo:** 3 min — **Prioridad:** P1\n**Pre:** item en `design_completed`.\n\n**Qué hacer:**\n1. Abre el item.\n2. Verifica que copy + diseño están coherentes.\n3. Mover a `internal_review` → revisar → mover a `pending_review`.\n\n**Qué validar:**\n- Estado avanza correctamente.\n- Notificación al client_approver sale.\n\n## Paso 9 — Recibir Request Changes del cliente y resolver\n**Bloque:** [Content](../02-content.md) — Escenario 5 (vista scientist)\n**Tiempo:** 5 min — **Prioridad:** P1\n**Pre:** el client_approver hizo \"Request changes\" con comentario (paso del flow client-approver).\n\n**Qué hacer:**\n1. Recibes notificación.\n2. Abre el item — lees el comentario del cliente.\n3. Ajusta el copy.\n4. Vuelve a mover a `pending_review`.\n\n**Qué validar:**\n- El comentario del cliente está visible.\n- Item vuelve correctamente a `pending_review` tras tu update.\n\n## Paso 10 — Programar el item aprobado\n**Bloque:** [Content](../02-content.md) — Escenario 6\n**Tiempo:** 1 min — **Prioridad:** P2\n**Pre:** item en `approved` (cliente lo aprobó).\n\n**Qué hacer:**\n1. Abre el item → \"Schedule\".\n2. Fecha y hora.\n\n**Qué validar:**\n- Estado `scheduled`.\n- `scheduled_at` no en el pasado.\n\n## Paso 11 — Reciclar un post publicado\n**Bloque:** [Content](../02-content.md) — Escenario 8\n**Tiempo:** 2 min — **Prioridad:** P3\n**Pre:** existe un post en `published` con buen rendimiento.\n\n**Qué hacer:**\n1. Abre el post.\n2. \"Recycle to company\" (si era expert) o duplicar.\n\n**Qué validar:**\n- Nuevo content item creado con `recycled_from_id`.\n- Copy pre-rellenado.\n\n## Fase 3 — Diseñar y enviar campañas outbound\n\nSub-flow de campañas: crear con ICPs/canales/AI Variables, submit para aprobación del cliente, iterar con v2 cuando los resultados lo pidan.\n\n## Paso 12 — Crear una campaña (post-F5)\n**Bloque:** [Campaigns](../05-campaigns.md) — flujo creación *(⚫ frozen)*\n**Tiempo:** 5 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/campaigns` → \"New campaign\".\n2. Selecciona cliente, ICPs, canales, pillar, source (Enginy/Lemlist/manual).\n3. Define 3-5 mensajes en la secuencia con delays.\n4. Inserta AI Variables.\n5. Save draft.\n\n**Qué validar:**\n- Campaña creada en estado `draft`.\n- Aparece en lista filtrada por status `draft`.\n\n## Paso 13 — Enviar campaña a aprobación del cliente\n**Bloque:** [Campaigns](../05-campaigns.md) — submit for approval *(⚫ frozen)*\n**Tiempo:** 1 min — **Prioridad:** P1\n**Pre:** campaña draft completa, todas las variables usadas están `approved`.\n\n**Qué hacer:**\n1. En el detalle → \"Submit for approval\".\n\n**Qué validar:**\n- Estado pasa a `pending_approval`.\n- Si alguna variable no está aprobada: error claro indicando cuál.\n\n## Paso 14 — Iterar una campaña (v2)\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 6 *(⚫ frozen)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** campaña v1 ya en `completed` o `running`.\n\n**Qué hacer:**\n1. Abre la campaña v1.\n2. \"Iterate\" → duplica como v2.\n3. Modifica copy/variables.\n4. Submit.\n\n**Qué validar:**\n- v2 tiene `parent_id = v1.id`.\n- UI muestra \"iteration of <v1_name>\".\n\n## Fase 4 — Monitorizar campañas y gestionar conversaciones\n\nCuando la campaña arranca, vigilar KPIs en vivo, etiquetar las respuestas que entran al inbox y responder o archivar en bulk.\n\n## Paso 15 — Monitorizar KPIs de campaña en marcha\n**Bloque:** [Campaigns](../05-campaigns.md) — Escenario 4 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** campaña en `running` con al menos algunos envíos.\n\n**Qué hacer:**\n1. Abre la campaña.\n2. Mira KPIs: `total_sent`, `total_replied`, `reply_rate`.\n\n**Qué validar:**\n- Datos actualizados (sync 15 min).\n- Click \"View replies\" lleva a Conversations filtrado.\n\n## Paso 16 — Gestionar conversaciones del cliente\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 2 *(⚫ frozen)*\n**Tiempo:** 4 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/conversations`.\n2. Ves TODAS las conversaciones del cliente (no solo `interested`).\n3. Para cada nueva: lee → asigna tag (`interested`, `not_interested`, `needs_follow_up`).\n\n**Qué validar:**\n- Etiquetas se persisten.\n- Si pones `interested`, la conversación aparece para el client_approver.\n\n## Paso 17 — Responder desde Simbionte\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 3 *(⚫ frozen post-F6)*\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** integración healthy.\n\n**Qué hacer:**\n1. Abre una conversación.\n2. Editor de reply al final → escribe → Send.\n\n**Qué validar:**\n- Reply aparece como outgoing en el hilo.\n- Estado pasa \"Sending → Sent → Delivered\" según webhooks.\n\n## Paso 18 — Bulk action en conversaciones\n**Bloque:** [Conversations](../07-conversations.md) — Escenario 5 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Selecciona varias conversations.\n2. Bulk: tag, archive, mark as read.\n\n**Qué validar:**\n- Acción aplicada a todas seleccionadas atómicamente.\n\n## Fase 5 — Analytics y cierre\n\nComparar métricas entre profiles, ver campaign funnel agregado, ajustar preferencias de notificación y cerrar sesión.\n\n## Paso 19 — Comparar profiles en Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenarios 1 y 3\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Cambia profile (company → expert → otro experto).\n3. (Si superadmin/marketing también) compara con benchmarks sector.\n\n**Qué validar:**\n- Métricas distintas por profile.\n- Datos del período aplicado correctamente.\n\n## Paso 20 — Ver campaign funnel (post-F7)\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 6 *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics` → sección Campaign performance.\n\n**Qué validar:**\n- Embudo: contactos → respondieron → interesados.\n- Coherente con counts de Conversations.\n\n## Paso 21 — Ajustar notification preferences\n**Bloque:** [Settings](../11-settings.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/settings` → Notifications.\n2. Activa \"When client requests changes\" y \"When campaign approved\".\n\n**Qué validar:**\n- Próximas notifications respetan tus elecciones.\n\n## Paso 22 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Cache TanStack Query limpiada al logout (no datos sensibles en localStorage).\n",
       "steps": [
         {
           "n": 1,
           "title": "Login",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio de sesión y workload",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 2",
@@ -1305,6 +1412,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Ver workload en Dashboard",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio de sesión y workload",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 5",
@@ -1316,6 +1425,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Revisar Playbook del cliente",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio de sesión y workload",
           "blockName": "Playbook",
           "blockHref": "../09-playbook.md",
           "scenario": "Escenario 2 (lectura/edición)",
@@ -1327,6 +1438,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Crear un content item nuevo",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 1",
@@ -1338,6 +1451,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Escribir copy y enviar a design pending",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 2",
@@ -1349,6 +1464,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Crear segundo content item para reciclar luego",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 1 (repetición)",
@@ -1360,6 +1477,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Esperar al designer (simulado: cambiar rol o avanzar manualmente)",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "interaction con designer",
@@ -1371,6 +1490,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Revisión interna del item",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 4",
@@ -1382,6 +1503,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Recibir Request Changes del cliente y resolver",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 5 (vista scientist)",
@@ -1393,6 +1516,8 @@ window.__QA_DATA = {
         {
           "n": 10,
           "title": "Programar el item aprobado",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 6",
@@ -1404,6 +1529,8 @@ window.__QA_DATA = {
         {
           "n": 11,
           "title": "Reciclar un post publicado",
+          "phaseNumber": 2,
+          "phaseTitle": "Crear y procesar contenido LinkedIn",
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 8",
@@ -1415,6 +1542,8 @@ window.__QA_DATA = {
         {
           "n": 12,
           "title": "Crear una campaña (post-F5)",
+          "phaseNumber": 3,
+          "phaseTitle": "Diseñar y enviar campañas outbound",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "flujo creación *(⚫ frozen)*",
@@ -1426,6 +1555,8 @@ window.__QA_DATA = {
         {
           "n": 13,
           "title": "Enviar campaña a aprobación del cliente",
+          "phaseNumber": 3,
+          "phaseTitle": "Diseñar y enviar campañas outbound",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "submit for approval *(⚫ frozen)*",
@@ -1437,6 +1568,8 @@ window.__QA_DATA = {
         {
           "n": 14,
           "title": "Iterar una campaña (v2)",
+          "phaseNumber": 3,
+          "phaseTitle": "Diseñar y enviar campañas outbound",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "Escenario 6 *(⚫ frozen)*",
@@ -1448,6 +1581,8 @@ window.__QA_DATA = {
         {
           "n": 15,
           "title": "Monitorizar KPIs de campaña en marcha",
+          "phaseNumber": 4,
+          "phaseTitle": "Monitorizar campañas y gestionar conversaciones",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "Escenario 4 *(⚫ frozen)*",
@@ -1459,6 +1594,8 @@ window.__QA_DATA = {
         {
           "n": 16,
           "title": "Gestionar conversaciones del cliente",
+          "phaseNumber": 4,
+          "phaseTitle": "Monitorizar campañas y gestionar conversaciones",
           "blockName": "Conversations",
           "blockHref": "../07-conversations.md",
           "scenario": "Escenario 2 *(⚫ frozen)*",
@@ -1470,6 +1607,8 @@ window.__QA_DATA = {
         {
           "n": 17,
           "title": "Responder desde Simbionte",
+          "phaseNumber": 4,
+          "phaseTitle": "Monitorizar campañas y gestionar conversaciones",
           "blockName": "Conversations",
           "blockHref": "../07-conversations.md",
           "scenario": "Escenario 3 *(⚫ frozen post-F6)*",
@@ -1481,6 +1620,8 @@ window.__QA_DATA = {
         {
           "n": 18,
           "title": "Bulk action en conversaciones",
+          "phaseNumber": 4,
+          "phaseTitle": "Monitorizar campañas y gestionar conversaciones",
           "blockName": "Conversations",
           "blockHref": "../07-conversations.md",
           "scenario": "Escenario 5 *(⚫ frozen)*",
@@ -1492,6 +1633,8 @@ window.__QA_DATA = {
         {
           "n": 19,
           "title": "Comparar profiles en Analytics",
+          "phaseNumber": 5,
+          "phaseTitle": "Analytics y cierre",
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenarios 1 y 3",
@@ -1503,6 +1646,8 @@ window.__QA_DATA = {
         {
           "n": 20,
           "title": "Ver campaign funnel (post-F7)",
+          "phaseNumber": 5,
+          "phaseTitle": "Analytics y cierre",
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenario 6 *(⚫ frozen)*",
@@ -1514,6 +1659,8 @@ window.__QA_DATA = {
         {
           "n": 21,
           "title": "Ajustar notification preferences",
+          "phaseNumber": 5,
+          "phaseTitle": "Analytics y cierre",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 4",
@@ -1525,6 +1672,8 @@ window.__QA_DATA = {
         {
           "n": 22,
           "title": "Logout",
+          "phaseNumber": 5,
+          "phaseTitle": "Analytics y cierre",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -1532,6 +1681,65 @@ window.__QA_DATA = {
           "priority": null,
           "precondition": null,
           "raw": "## Paso 22 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Cache TanStack Query limpiada al logout (no datos sensibles en localStorage)."
+        }
+      ],
+      "phases": [
+        {
+          "number": 1,
+          "title": "Inicio de sesión y workload",
+          "description": "Login, revisar Dashboard de tareas pendientes y consultar el Playbook del cliente que vas a tratar.",
+          "stepNumbers": [
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "number": 2,
+          "title": "Crear y procesar contenido LinkedIn",
+          "description": "Sub-flow completo de producción: crear item → escribir copy → esperar al designer → internal review → enviar a cliente → resolver feedback → programar → reciclar exitosos.",
+          "stepNumbers": [
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ]
+        },
+        {
+          "number": 3,
+          "title": "Diseñar y enviar campañas outbound",
+          "description": "Sub-flow de campañas: crear con ICPs/canales/AI Variables, submit para aprobación del cliente, iterar con v2 cuando los resultados lo pidan.",
+          "stepNumbers": [
+            12,
+            13,
+            14
+          ]
+        },
+        {
+          "number": 4,
+          "title": "Monitorizar campañas y gestionar conversaciones",
+          "description": "Cuando la campaña arranca, vigilar KPIs en vivo, etiquetar las respuestas que entran al inbox y responder o archivar en bulk.",
+          "stepNumbers": [
+            15,
+            16,
+            17,
+            18
+          ]
+        },
+        {
+          "number": 5,
+          "title": "Analytics y cierre",
+          "description": "Comparar métricas entre profiles, ver campaign funnel agregado, ajustar preferencias de notificación y cerrar sesión.",
+          "stepNumbers": [
+            19,
+            20,
+            21,
+            22
+          ]
         }
       ]
     },
@@ -1559,6 +1767,8 @@ window.__QA_DATA = {
         {
           "n": 1,
           "title": "Login",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 2",
@@ -1570,6 +1780,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Ver workload en Dashboard",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 5 (vista designer)",
@@ -1581,6 +1793,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Filtrar Content por design_pending",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 3 (vista designer)",
@@ -1592,6 +1806,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Subir diseño a un item",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "Escenario 3",
@@ -1603,6 +1819,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Subir mockup de profile LinkedIn",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Profiles",
           "blockHref": "../08-profiles.md",
           "scenario": "Escenario 2 (vista designer)",
@@ -1614,6 +1832,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Recibir Request Changes en profile y resubir",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Profiles",
           "blockHref": "../08-profiles.md",
           "scenario": "Escenario 2 (rejection loop)",
@@ -1625,6 +1845,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Procesar varios items en lote (workflow real)",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Content",
           "blockHref": "../02-content.md",
           "scenario": "productividad designer",
@@ -1636,6 +1858,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Verificar restricciones de rol",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": null,
           "blockHref": null,
           "scenario": null,
@@ -1647,6 +1871,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Logout",
+          "phaseNumber": null,
+          "phaseTitle": null,
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -1655,7 +1881,8 @@ window.__QA_DATA = {
           "precondition": null,
           "raw": "## Paso 9 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`."
         }
-      ]
+      ],
+      "phases": []
     },
     {
       "file": "05-marketing.md",
@@ -1681,11 +1908,13 @@ window.__QA_DATA = {
         "P1",
         "P2"
       ],
-      "body": "\n# Flow QA — Marketing (end-to-end)\n\n> Foco operativo: crea y configura clientes, activa addons, gestiona integraciones, sube recursos compartidos, supervisa portfolio analytics. 15 pasos, ~50 min.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar marketing: ve Clients, Resources (con subir), Analytics global, etc.\n\n## Paso 2 — Vista portfolio en Dashboard\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 5 (marketing)\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Mira cards: portfolio overview, clientes en onboarding, alertas.\n\n**Qué validar:**\n- Vista agregada de TODOS los clientes (marketing ve todo, no solo asignados).\n\n## Paso 3 — Crear cliente nuevo\n**Bloque:** [Clients](../12-clients.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/clients` → \"Add Client\".\n2. Rellena: `name`, `industry`, `website`, `package=Estandar`, `contract_status=Onboarding`.\n3. Asigna scientist, designer, marketing del modal.\n4. Save.\n\n**Qué validar:**\n- Cliente aparece en la lista.\n- Asignaciones quedan en `client_assignments`.\n\n## Paso 4 — Configurar kickoff URL\n**Bloque:** [Clients](../12-clients.md) — Escenario 2\n**Tiempo:** 1 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Abre la ficha del cliente creado.\n2. Sección \"Kickoff Meeting\" → pega URL Cal.com.\n3. Save.\n\n**Qué validar:**\n- URL guardada, validación de formato (debe ser https://).\n\n## Paso 5 — Invitar client_approver\n**Bloque:** [Clients](../12-clients.md) — Escenario 3\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Sección \"Client User Account\" → \"Invite client user\".\n2. Email + role `client_approver`.\n3. Send.\n\n**Qué validar:**\n- Mensaje \"Invitation sent\".\n- Email de invitación se envía (o ya existe → \"Existing user added as ...\").\n- Badge \"Pending\" hasta que acepta.\n\n## Paso 6 — Conectar integración Lemlist al cliente\n**Bloque:** [Settings](../11-settings.md) — Escenario 3\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** tienes la API key de Lemlist sandbox del cliente.\n\n**Qué hacer:**\n1. Desde la ficha del cliente, click \"Manage integrations\" o entra a `/settings` con contexto del cliente.\n2. \"Add Lemlist\".\n3. Pega API key.\n4. \"Test connection\".\n5. Si OK, \"Save\".\n\n**Qué validar:**\n- Test devuelve 200.\n- Badge \"Connected — healthy\".\n- API key NO visible nunca tras guardar (almacenada en Vault).\n\n**Si falla:** ver [Settings](../11-settings.md) sección 6 — \"Test connection devuelve `401 Unauthorized`\".\n\n## Paso 7 — Conectar integración Enginy a otro cliente premium\n**Bloque:** [Settings](../11-settings.md) — Escenario 3 (variante)\n**Tiempo:** 4 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Para un cliente con `package=Premium`.\n2. Repite paso 6 con Enginy en lugar de Lemlist.\n\n**Qué validar:**\n- Mismo flow, distinto provider.\n- Badge \"Connected — healthy\".\n\n## Paso 8 — Activar addon Blog en un cliente\n**Bloque:** [Clients](../12-clients.md) — Escenario 4\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** cliente con `addon_blog=false`.\n\n**Qué hacer:**\n1. Ficha del cliente → \"Addons\".\n2. Toggle `addon_blog=true`.\n3. Configurar setup (dominio, plantilla, credenciales CMS).\n4. Marcar `addon_blog_setup_complete=true`.\n\n**Qué validar:**\n- La sección \"Blog\" NO aparece en sidebar del cliente hasta que setup_complete=true.\n- Una vez complete, aparece y es funcional para el cliente.\n\n## Paso 9 — Crear primer artículo de blog para ese cliente\n**Bloque:** [Blog](../03-blog.md) — Escenario 2\n**Tiempo:** 5 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Cambia a contexto del cliente con addon Blog activo.\n2. `/blog` → \"New article\".\n3. Rellena: título, slug, meta_title, meta_description, hero_image, copy.\n4. Mueve a `pending_review`.\n\n**Qué validar:**\n- Slug UNIQUE por cliente — intenta crear dos con mismo slug, debe rechazar.\n- Estado avanza correctamente.\n\n## Paso 10 — Activar y configurar Newsletter addon\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenario 1\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Cliente con `addon_newsletter=true`.\n2. Configura: dominio envío, \"from\" email, SMTP provider.\n3. Importa CSV de 10-50 suscriptores.\n4. Marcar `addon_newsletter_setup_complete=true`.\n\n**Qué validar:**\n- Sección Newsletter aparece en sidebar del cliente.\n- Subscribers importados visibles.\n\n## Paso 11 — Crear edición de newsletter y mandar test\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenarios 2 y \"test send\"\n**Tiempo:** 5 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/newsletter` → \"New edition\".\n2. Rellena: subject, preheader, 2-3 blocks de contenido.\n3. \"Send test to me\" → mira preview en tu email.\n4. Vuelve a Simbionte → mueve la edición a `pending_review`.\n\n**Qué validar:**\n- Email de test llega correctamente.\n- HTML rendered bien en mobile + desktop.\n\n## Paso 12 — Gestionar subscribers de Newsletter\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenario 5\n**Tiempo:** 3 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/newsletter` → \"Subscribers\".\n2. Añade manualmente uno con email + first_name + tag.\n3. Elimina otro.\n\n**Qué validar:**\n- Lista se actualiza.\n- Próxima edición se enviaría a la lista actualizada.\n\n## Paso 13 — Subir un Resource visible para varios clientes\n**Bloque:** [Resources](../10-resources.md) — Escenario 2\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/resources` → \"Add Resource\".\n2. Sube un PDF.\n3. Visibility = \"Selected clients\" → marca 2-3 clientes específicos.\n4. Save.\n\n**Qué validar:**\n- Resource visible para los clientes marcados, NO para otros.\n- Otro cliente (no en la lista) NO ve este resource.\n\n## Paso 14 — Vista global Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenarios 1 y 3\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Selector \"Client\" → cambia entre varios clientes.\n3. Cambia periodo.\n\n**Qué validar:**\n- Marketing ve métricas de TODOS los clientes.\n- Cambio de cliente refresca métricas correctamente.\n- No mezcla datos entre clientes (no aggregations cartesian).\n\n## Paso 15 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`.\n",
+      "body": "\n# Flow QA — Marketing (end-to-end)\n\n> Foco operativo: crea y configura clientes, activa addons, gestiona integraciones, sube recursos compartidos, supervisa portfolio analytics. 15 pasos, ~50 min, agrupados en 5 fases.\n\n## Fase 1 — Inicio y vista de portfolio\n\nLogin y revisión del dashboard agregado con la cartera completa de clientes.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar marketing: ve Clients, Resources (con subir), Analytics global, etc.\n\n## Paso 2 — Vista portfolio en Dashboard\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 5 (marketing)\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Mira cards: portfolio overview, clientes en onboarding, alertas.\n\n**Qué validar:**\n- Vista agregada de TODOS los clientes (marketing ve todo, no solo asignados).\n\n## Fase 2 — Alta completa de un cliente nuevo\n\nSub-flow crítico: crear cliente, configurar kickoff URL, invitar al client_approver y conectar las herramientas de campañas (Lemlist para Estándar, Enginy para Premium). Cubre los pasos en orden necesario para que el cliente pueda empezar su onboarding.\n\n## Paso 3 — Crear cliente nuevo\n**Bloque:** [Clients](../12-clients.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/clients` → \"Add Client\".\n2. Rellena: `name`, `industry`, `website`, `package=Estandar`, `contract_status=Onboarding`.\n3. Asigna scientist, designer, marketing del modal.\n4. Save.\n\n**Qué validar:**\n- Cliente aparece en la lista.\n- Asignaciones quedan en `client_assignments`.\n\n## Paso 4 — Configurar kickoff URL\n**Bloque:** [Clients](../12-clients.md) — Escenario 2\n**Tiempo:** 1 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Abre la ficha del cliente creado.\n2. Sección \"Kickoff Meeting\" → pega URL Cal.com.\n3. Save.\n\n**Qué validar:**\n- URL guardada, validación de formato (debe ser https://).\n\n## Paso 5 — Invitar client_approver\n**Bloque:** [Clients](../12-clients.md) — Escenario 3\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Sección \"Client User Account\" → \"Invite client user\".\n2. Email + role `client_approver`.\n3. Send.\n\n**Qué validar:**\n- Mensaje \"Invitation sent\".\n- Email de invitación se envía (o ya existe → \"Existing user added as ...\").\n- Badge \"Pending\" hasta que acepta.\n\n## Paso 6 — Conectar integración Lemlist al cliente\n**Bloque:** [Settings](../11-settings.md) — Escenario 3\n**Tiempo:** 4 min — **Prioridad:** P1\n**Pre:** tienes la API key de Lemlist sandbox del cliente.\n\n**Qué hacer:**\n1. Desde la ficha del cliente, click \"Manage integrations\" o entra a `/settings` con contexto del cliente.\n2. \"Add Lemlist\".\n3. Pega API key.\n4. \"Test connection\".\n5. Si OK, \"Save\".\n\n**Qué validar:**\n- Test devuelve 200.\n- Badge \"Connected — healthy\".\n- API key NO visible nunca tras guardar (almacenada en Vault).\n\n**Si falla:** ver [Settings](../11-settings.md) sección 6 — \"Test connection devuelve `401 Unauthorized`\".\n\n## Paso 7 — Conectar integración Enginy a otro cliente premium\n**Bloque:** [Settings](../11-settings.md) — Escenario 3 (variante)\n**Tiempo:** 4 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Para un cliente con `package=Premium`.\n2. Repite paso 6 con Enginy en lugar de Lemlist.\n\n**Qué validar:**\n- Mismo flow, distinto provider.\n- Badge \"Connected — healthy\".\n\n## Fase 3 — Activar addons y producir contenido inicial\n\nActivar Blog y Newsletter como módulos opcionales, configurarlos (dominio, plantilla, SMTP) y producir las primeras piezas (artículo, edición newsletter).\n\n## Paso 8 — Activar addon Blog en un cliente\n**Bloque:** [Clients](../12-clients.md) — Escenario 4\n**Tiempo:** 3 min — **Prioridad:** P2\n**Pre:** cliente con `addon_blog=false`.\n\n**Qué hacer:**\n1. Ficha del cliente → \"Addons\".\n2. Toggle `addon_blog=true`.\n3. Configurar setup (dominio, plantilla, credenciales CMS).\n4. Marcar `addon_blog_setup_complete=true`.\n\n**Qué validar:**\n- La sección \"Blog\" NO aparece en sidebar del cliente hasta que setup_complete=true.\n- Una vez complete, aparece y es funcional para el cliente.\n\n## Paso 9 — Crear primer artículo de blog para ese cliente\n**Bloque:** [Blog](../03-blog.md) — Escenario 2\n**Tiempo:** 5 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Cambia a contexto del cliente con addon Blog activo.\n2. `/blog` → \"New article\".\n3. Rellena: título, slug, meta_title, meta_description, hero_image, copy.\n4. Mueve a `pending_review`.\n\n**Qué validar:**\n- Slug UNIQUE por cliente — intenta crear dos con mismo slug, debe rechazar.\n- Estado avanza correctamente.\n\n## Paso 10 — Activar y configurar Newsletter addon\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenario 1\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Cliente con `addon_newsletter=true`.\n2. Configura: dominio envío, \"from\" email, SMTP provider.\n3. Importa CSV de 10-50 suscriptores.\n4. Marcar `addon_newsletter_setup_complete=true`.\n\n**Qué validar:**\n- Sección Newsletter aparece en sidebar del cliente.\n- Subscribers importados visibles.\n\n## Paso 11 — Crear edición de newsletter y mandar test\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenarios 2 y \"test send\"\n**Tiempo:** 5 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/newsletter` → \"New edition\".\n2. Rellena: subject, preheader, 2-3 blocks de contenido.\n3. \"Send test to me\" → mira preview en tu email.\n4. Vuelve a Simbionte → mueve la edición a `pending_review`.\n\n**Qué validar:**\n- Email de test llega correctamente.\n- HTML rendered bien en mobile + desktop.\n\n## Paso 12 — Gestionar subscribers de Newsletter\n**Bloque:** [Newsletter](../04-newsletter.md) — Escenario 5\n**Tiempo:** 3 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. `/newsletter` → \"Subscribers\".\n2. Añade manualmente uno con email + first_name + tag.\n3. Elimina otro.\n\n**Qué validar:**\n- Lista se actualiza.\n- Próxima edición se enviaría a la lista actualizada.\n\n## Fase 4 — Recursos compartidos y analytics global\n\nSubir recursos a la biblioteca con visibilidad granular y revisar métricas agregadas de toda la cartera.\n\n## Paso 13 — Subir un Resource visible para varios clientes\n**Bloque:** [Resources](../10-resources.md) — Escenario 2\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/resources` → \"Add Resource\".\n2. Sube un PDF.\n3. Visibility = \"Selected clients\" → marca 2-3 clientes específicos.\n4. Save.\n\n**Qué validar:**\n- Resource visible para los clientes marcados, NO para otros.\n- Otro cliente (no en la lista) NO ve este resource.\n\n## Paso 14 — Vista global Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenarios 1 y 3\n**Tiempo:** 4 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Selector \"Client\" → cambia entre varios clientes.\n3. Cambia periodo.\n\n**Qué validar:**\n- Marketing ve métricas de TODOS los clientes.\n- Cambio de cliente refresca métricas correctamente.\n- No mezcla datos entre clientes (no aggregations cartesian).\n\n## Fase 5 — Cierre\n\n## Paso 15 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`.\n",
       "steps": [
         {
           "n": 1,
           "title": "Login",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio y vista de portfolio",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 2",
@@ -1697,6 +1926,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Vista portfolio en Dashboard",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio y vista de portfolio",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 5 (marketing)",
@@ -1708,6 +1939,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Crear cliente nuevo",
+          "phaseNumber": 2,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 1",
@@ -1719,6 +1952,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Configurar kickoff URL",
+          "phaseNumber": 2,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 2",
@@ -1730,6 +1965,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Invitar client_approver",
+          "phaseNumber": 2,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 3",
@@ -1741,6 +1978,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Conectar integración Lemlist al cliente",
+          "phaseNumber": 2,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 3",
@@ -1752,6 +1991,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Conectar integración Enginy a otro cliente premium",
+          "phaseNumber": 2,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 3 (variante)",
@@ -1763,6 +2004,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Activar addon Blog en un cliente",
+          "phaseNumber": 3,
+          "phaseTitle": "Activar addons y producir contenido inicial",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 4",
@@ -1774,6 +2017,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Crear primer artículo de blog para ese cliente",
+          "phaseNumber": 3,
+          "phaseTitle": "Activar addons y producir contenido inicial",
           "blockName": "Blog",
           "blockHref": "../03-blog.md",
           "scenario": "Escenario 2",
@@ -1785,6 +2030,8 @@ window.__QA_DATA = {
         {
           "n": 10,
           "title": "Activar y configurar Newsletter addon",
+          "phaseNumber": 3,
+          "phaseTitle": "Activar addons y producir contenido inicial",
           "blockName": "Newsletter",
           "blockHref": "../04-newsletter.md",
           "scenario": "Escenario 1",
@@ -1796,6 +2043,8 @@ window.__QA_DATA = {
         {
           "n": 11,
           "title": "Crear edición de newsletter y mandar test",
+          "phaseNumber": 3,
+          "phaseTitle": "Activar addons y producir contenido inicial",
           "blockName": "Newsletter",
           "blockHref": "../04-newsletter.md",
           "scenario": "Escenarios 2 y \"test send\"",
@@ -1807,6 +2056,8 @@ window.__QA_DATA = {
         {
           "n": 12,
           "title": "Gestionar subscribers de Newsletter",
+          "phaseNumber": 3,
+          "phaseTitle": "Activar addons y producir contenido inicial",
           "blockName": "Newsletter",
           "blockHref": "../04-newsletter.md",
           "scenario": "Escenario 5",
@@ -1818,6 +2069,8 @@ window.__QA_DATA = {
         {
           "n": 13,
           "title": "Subir un Resource visible para varios clientes",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos compartidos y analytics global",
           "blockName": "Resources",
           "blockHref": "../10-resources.md",
           "scenario": "Escenario 2",
@@ -1829,6 +2082,8 @@ window.__QA_DATA = {
         {
           "n": 14,
           "title": "Vista global Analytics",
+          "phaseNumber": 4,
+          "phaseTitle": "Recursos compartidos y analytics global",
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenarios 1 y 3",
@@ -1840,6 +2095,8 @@ window.__QA_DATA = {
         {
           "n": 15,
           "title": "Logout",
+          "phaseNumber": 5,
+          "phaseTitle": "Cierre",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -1847,6 +2104,58 @@ window.__QA_DATA = {
           "priority": null,
           "precondition": null,
           "raw": "## Paso 15 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`."
+        }
+      ],
+      "phases": [
+        {
+          "number": 1,
+          "title": "Inicio y vista de portfolio",
+          "description": "Login y revisión del dashboard agregado con la cartera completa de clientes.",
+          "stepNumbers": [
+            1,
+            2
+          ]
+        },
+        {
+          "number": 2,
+          "title": "Alta completa de un cliente nuevo",
+          "description": "Sub-flow crítico: crear cliente, configurar kickoff URL, invitar al client_approver y conectar las herramientas de campañas (Lemlist para Estándar, Enginy para Premium). Cubre los pasos en orden necesario para que el cliente pueda empezar su onboarding.",
+          "stepNumbers": [
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        },
+        {
+          "number": 3,
+          "title": "Activar addons y producir contenido inicial",
+          "description": "Activar Blog y Newsletter como módulos opcionales, configurarlos (dominio, plantilla, SMTP) y producir las primeras piezas (artículo, edición newsletter).",
+          "stepNumbers": [
+            8,
+            9,
+            10,
+            11,
+            12
+          ]
+        },
+        {
+          "number": 4,
+          "title": "Recursos compartidos y analytics global",
+          "description": "Subir recursos a la biblioteca con visibilidad granular y revisar métricas agregadas de toda la cartera.",
+          "stepNumbers": [
+            13,
+            14
+          ]
+        },
+        {
+          "number": 5,
+          "title": "Cierre",
+          "description": "",
+          "stepNumbers": [
+            15
+          ]
         }
       ]
     },
@@ -1879,11 +2188,13 @@ window.__QA_DATA = {
         "P2",
         "P3"
       ],
-      "body": "\n# Flow QA — Superadmin (end-to-end)\n\n> El flow más extenso. Cubre setup completo desde cero + audit + edge cases administrativos. 25 pasos, ~75 min. Es el QA \"master\" — si esto pasa, la plataforma está sana.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar superadmin: ves TODAS las secciones, incluyendo Team y Activity Log.\n\n## Paso 2 — Ver SuperadminOnboardingGuide (si primera vez)\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 6\n**Tiempo:** 2 min — **Prioridad:** P3\n**Pre:** primer login del superadmin en setup limpio.\n\n**Qué hacer:**\n1. Mira la card especial \"Superadmin Onboarding Guide\" (si aparece).\n2. Sigue los pasos sugeridos.\n\n**Qué validar:**\n- Guide aparece solo en setup vacío (sin clientes, sin team).\n- Se oculta una vez completado.\n\n## Paso 3 — Invitar primer miembro del equipo\n**Bloque:** [Team](../13-team.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/team` → \"Add member\".\n2. Email + role `scientist`.\n3. Send.\n\n**Qué validar:**\n- \"Invitation sent\".\n- Magic link enviado.\n- Badge \"Pending\" hasta que acepta.\n\n## Paso 4 — Invitar segundo miembro con email existente\n**Bloque:** [Team](../13-team.md) — Escenario 1 (variante)\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** el email pertenece a alguien que ya tiene cuenta Simbionte (otro rol).\n\n**Qué hacer:**\n1. `/team` → \"Add member\" con email existente.\n2. Save.\n\n**Qué validar:**\n- Mensaje \"Existing user added as <role>\" (NO segundo magic link).\n- Row en `team_members` sin duplicar.\n\n## Paso 5 — Invitar designer y marketing\n**Bloque:** [Team](../13-team.md) — Escenario 1 (repetición)\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Invita 1 designer y 1 marketing más.\n\n**Qué validar:**\n- Lista de team tiene varios miembros con badges correctos.\n\n## Paso 6 — Crear cliente desde cero\n**Bloque:** [Clients](../12-clients.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/clients` → \"Add Client\".\n2. Mínimo: name. Recomendado: industry, website, package, ContractStatus=Onboarding.\n3. Asigna scientist, designer, marketing del modal.\n\n**Qué validar:**\n- Cliente aparece en lista.\n- `client_assignments` creados.\n- Aparece en dashboard del scientist asignado.\n\n## Paso 7 — Configurar kickoff + invitar client_approver\n**Bloque:** [Clients](../12-clients.md) — Escenarios 2 y 3\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Configura kickoff_meeting_url.\n2. Invita client_approver vía email.\n\n**Qué validar:**\n- Email de invitación al approver enviado.\n\n## Paso 8 — Conectar Lemlist sandbox al cliente\n**Bloque:** [Settings](../11-settings.md) — Escenario 3\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/settings` o desde ficha cliente → \"Manage integrations\".\n2. Add Lemlist con sandbox API key.\n3. Test → Save.\n\n**Qué validar:**\n- Healthy.\n- API key en Vault, no en BD plana.\n\n## Paso 9 — Verificar setup desde otro rol (impersonate)\n**Bloque:** Multi-bloque (control de acceso superadmin)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. (Opcional) si hay feature \"View as <role>\", actívalo.\n2. O logout y login con la cuenta del scientist asignado.\n\n**Qué validar:**\n- Scientist ve solo el cliente nuevo (no otros).\n- Designer ve solo design_pending de este cliente.\n\n## Paso 10 — Eliminar a un miembro del team (cuidado: NO último superadmin)\n**Bloque:** [Team](../13-team.md) — Escenario 4\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/team` → click miembro NO crítico → \"Remove from team\".\n2. Confirma.\n\n**Qué validar:**\n- Pierde acceso.\n- Sus `client_assignments` se eliminan.\n- Si intentas eliminar el último superadmin: BLOQUEADO con mensaje claro.\n\n## Paso 11 — Cambiar rol de un miembro\n**Bloque:** [Team](../13-team.md) — Escenario 3\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/team` → miembro → \"Edit\" → cambia role (p.ej. scientist → marketing).\n\n**Qué validar:**\n- Permisos nuevos se aplican (refrescar).\n\n## Paso 12 — Activar addons en cliente\n**Bloque:** [Clients](../12-clients.md) — Escenario 4\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Toggle `addon_blog=true` y `addon_newsletter=true`.\n2. Marca setup_complete para ambos.\n\n**Qué validar:**\n- Sidebars correspondientes aparecen.\n\n## Paso 13 — Subir Resource visible para TODOS los clientes\n**Bloque:** [Resources](../10-resources.md) — Escenario 2 (variante)\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/resources` → Add → visibility = \"All clients\".\n\n**Qué validar:**\n- Cualquier cliente ve el resource en su `/resources`.\n\n## Paso 14 — Cambiar visibility de un resource\n**Bloque:** [Resources](../10-resources.md) — Escenario 3\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Edita un resource → cambia a \"Selected clients\" → deja solo 1.\n\n**Qué validar:**\n- Los otros clientes dejan de verlo inmediatamente.\n\n## Paso 15 — Auditar cambios del cliente nuevo en Activity Log\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenarios 1 y 2\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/activity` → filtro \"Client\" = <nombre>.\n2. Filtro rango últimas 24h.\n\n**Qué validar:**\n- Ves: creación del cliente, invitaciones, asignaciones, conexión Lemlist.\n- Cada fila tiene actor_user_id correcto.\n\n## Paso 16 — Buscar quién aprobó un content específico\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenario 1\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** algún content fue aprobado por el client_approver.\n\n**Qué hacer:**\n1. `/activity` → filtro tipo `content_approved`.\n2. Busca el content por ID.\n\n**Qué validar:**\n- Fila visible con actor_user_id = el client_approver.\n- Timestamp coherente.\n\n## Paso 17 — Verificar acceso bloqueado para no-superadmin\n**Bloque:** [Activity Log](../14-activity-log.md) — control acceso\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Logout, login con scientist.\n2. Intenta entrar a `/activity` o `/team`.\n\n**Qué validar:**\n- 404 o redirect, NO fuga de información.\n\n## Paso 18 — Volver a superadmin: forzar pausa de campaña\n**Bloque:** [Campaigns](../05-campaigns.md) — override admin *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** campaña en `running`.\n\n**Qué hacer:**\n1. Re-login superadmin.\n2. `/campaigns` → campaña running → \"Pause\".\n\n**Qué validar:**\n- Estado pasa a `paused`.\n- Solo superadmin puede reanudar.\n\n## Paso 19 — Reanudar campaña pausada\n**Bloque:** [Campaigns](../05-campaigns.md) — override admin *(⚫ frozen)*\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Campaña en `paused` → \"Resume\".\n\n**Qué validar:**\n- Vuelve a `running`.\n- Envíos continúan donde se quedaron.\n\n## Paso 20 — Vista global de Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 1 (superadmin)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Selector \"All clients\" o sin filtro.\n3. Mira Paid vs Organic split (solo superadmin).\n\n**Qué validar:**\n- Métricas agregadas sin fugar individuales por cliente sin permiso.\n- Paid vs Organic visible.\n\n## Paso 21 — Eliminar un client_user (cuidado: no último approver)\n**Bloque:** [Clients](../12-clients.md) — Escenario 6\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Ficha cliente → Client User → \"Remove access\" en un commenter (no approver).\n\n**Qué validar:**\n- Pierde acceso.\n- Si intentas eliminar el último `client_approver`: BLOQUEADO.\n\n## Paso 22 — Eliminar cliente (acción destructiva)\n**Bloque:** [Clients](../12-clients.md) — Escenario 7\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** cliente de test que no te importa.\n\n**Qué hacer:**\n1. Ficha → \"Delete client\" → doble confirm.\n\n**Qué validar:**\n- Soft delete: `clients.deleted_at` se setea.\n- Contenido del cliente queda OCULTO en listas pero accesible en BD.\n- Usuarios cliente pierden acceso.\n\n## Paso 23 — Verificar persistencia tras delete soft\n**Bloque:** Múltiple\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Tras paso 22, login como scientist asignado → ¿ves el cliente eliminado?\n2. Login client_approver del cliente eliminado → ¿puedes entrar?\n\n**Qué validar:**\n- Cliente eliminado NO aparece en listas.\n- Su client_approver recibe redirect / 403.\n- Datos persisten en BD para auditoría.\n\n## Paso 24 — Verificar Activity Log capturó la eliminación\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/activity` → busca `event_type=client_deleted`.\n\n**Qué validar:**\n- Fila visible con timestamp y actor_user_id = tú.\n\n## Paso 25 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`.\n- Cache cleared.\n",
+      "body": "\n# Flow QA — Superadmin (end-to-end)\n\n> El flow más extenso. Cubre setup completo desde cero + audit + edge cases administrativos. 25 pasos, ~75 min, agrupados en 8 fases. Es el QA \"master\" — si esto pasa, la plataforma está sana.\n\n## Fase 1 — Inicio de sesión\n\nLogin y verificación del dashboard especializado de superadmin.\n\n## Paso 1 — Login\n**Bloque:** [Auth](../15-auth.md) — Escenario 2\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/auth` → magic link → entra.\n\n**Qué validar:**\n- Aterrizas en `/`.\n- Sidebar superadmin: ves TODAS las secciones, incluyendo Team y Activity Log.\n\n## Paso 2 — Ver SuperadminOnboardingGuide (si primera vez)\n**Bloque:** [Dashboard](../01-dashboard.md) — Escenario 6\n**Tiempo:** 2 min — **Prioridad:** P3\n**Pre:** primer login del superadmin en setup limpio.\n\n**Qué hacer:**\n1. Mira la card especial \"Superadmin Onboarding Guide\" (si aparece).\n2. Sigue los pasos sugeridos.\n\n**Qué validar:**\n- Guide aparece solo en setup vacío (sin clientes, sin team).\n- Se oculta una vez completado.\n\n## Fase 2 — Construir el equipo interno\n\nInvitar a los miembros del equipo Simbionte (scientist, designer, marketing). Necesario antes de poder asignarlos a clientes en la siguiente fase.\n\n## Paso 3 — Invitar primer miembro del equipo\n**Bloque:** [Team](../13-team.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/team` → \"Add member\".\n2. Email + role `scientist`.\n3. Send.\n\n**Qué validar:**\n- \"Invitation sent\".\n- Magic link enviado.\n- Badge \"Pending\" hasta que acepta.\n\n## Paso 4 — Invitar segundo miembro con email existente\n**Bloque:** [Team](../13-team.md) — Escenario 1 (variante)\n**Tiempo:** 2 min — **Prioridad:** P1\n**Pre:** el email pertenece a alguien que ya tiene cuenta Simbionte (otro rol).\n\n**Qué hacer:**\n1. `/team` → \"Add member\" con email existente.\n2. Save.\n\n**Qué validar:**\n- Mensaje \"Existing user added as <role>\" (NO segundo magic link).\n- Row en `team_members` sin duplicar.\n\n## Paso 5 — Invitar designer y marketing\n**Bloque:** [Team](../13-team.md) — Escenario 1 (repetición)\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Invita 1 designer y 1 marketing más.\n\n**Qué validar:**\n- Lista de team tiene varios miembros con badges correctos.\n\n## Fase 3 — Alta completa de un cliente nuevo\n\nSub-flow crítico: crear cliente desde cero, configurar kickoff URL, invitar al client_approver y conectar la herramienta de campañas (Lemlist). Si algún paso de esta fase falla, el cliente no puede arrancar su onboarding.\n\n## Paso 6 — Crear cliente desde cero\n**Bloque:** [Clients](../12-clients.md) — Escenario 1\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/clients` → \"Add Client\".\n2. Mínimo: name. Recomendado: industry, website, package, ContractStatus=Onboarding.\n3. Asigna scientist, designer, marketing del modal.\n\n**Qué validar:**\n- Cliente aparece en lista.\n- `client_assignments` creados.\n- Aparece en dashboard del scientist asignado.\n\n## Paso 7 — Configurar kickoff + invitar client_approver\n**Bloque:** [Clients](../12-clients.md) — Escenarios 2 y 3\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Configura kickoff_meeting_url.\n2. Invita client_approver vía email.\n\n**Qué validar:**\n- Email de invitación al approver enviado.\n\n## Paso 8 — Conectar Lemlist sandbox al cliente\n**Bloque:** [Settings](../11-settings.md) — Escenario 3\n**Tiempo:** 3 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/settings` o desde ficha cliente → \"Manage integrations\".\n2. Add Lemlist con sandbox API key.\n3. Test → Save.\n\n**Qué validar:**\n- Healthy.\n- API key en Vault, no en BD plana.\n\n## Fase 4 — Verificación y gestión continuada del equipo\n\nComprobar permisos cruzados, eliminar miembros del team y cambiar roles. Asegura que el ABAC (access control) funciona y los cambios se aplican en cascada.\n\n## Paso 9 — Verificar setup desde otro rol (impersonate)\n**Bloque:** Multi-bloque (control de acceso superadmin)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. (Opcional) si hay feature \"View as <role>\", actívalo.\n2. O logout y login con la cuenta del scientist asignado.\n\n**Qué validar:**\n- Scientist ve solo el cliente nuevo (no otros).\n- Designer ve solo design_pending de este cliente.\n\n## Paso 10 — Eliminar a un miembro del team (cuidado: NO último superadmin)\n**Bloque:** [Team](../13-team.md) — Escenario 4\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. `/team` → click miembro NO crítico → \"Remove from team\".\n2. Confirma.\n\n**Qué validar:**\n- Pierde acceso.\n- Sus `client_assignments` se eliminan.\n- Si intentas eliminar el último superadmin: BLOQUEADO con mensaje claro.\n\n## Paso 11 — Cambiar rol de un miembro\n**Bloque:** [Team](../13-team.md) — Escenario 3\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/team` → miembro → \"Edit\" → cambia role (p.ej. scientist → marketing).\n\n**Qué validar:**\n- Permisos nuevos se aplican (refrescar).\n\n## Fase 5 — Activar addons y compartir recursos con el cliente\n\nActivar Blog/Newsletter opcionales y subir recursos (PDFs, plantillas) con visibilidad granular (todos los clientes o subset).\n\n## Paso 12 — Activar addons en cliente\n**Bloque:** [Clients](../12-clients.md) — Escenario 4\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Toggle `addon_blog=true` y `addon_newsletter=true`.\n2. Marca setup_complete para ambos.\n\n**Qué validar:**\n- Sidebars correspondientes aparecen.\n\n## Paso 13 — Subir Resource visible para TODOS los clientes\n**Bloque:** [Resources](../10-resources.md) — Escenario 2 (variante)\n**Tiempo:** 2 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/resources` → Add → visibility = \"All clients\".\n\n**Qué validar:**\n- Cualquier cliente ve el resource en su `/resources`.\n\n## Paso 14 — Cambiar visibility de un resource\n**Bloque:** [Resources](../10-resources.md) — Escenario 3\n**Tiempo:** 2 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Edita un resource → cambia a \"Selected clients\" → deja solo 1.\n\n**Qué validar:**\n- Los otros clientes dejan de verlo inmediatamente.\n\n## Fase 6 — Auditoría y control de acceso\n\nVerificar que el Activity Log captura todos los eventos importantes y que no-superadmins no pueden entrar a `/activity` ni `/team`.\n\n## Paso 15 — Auditar cambios del cliente nuevo en Activity Log\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenarios 1 y 2\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/activity` → filtro \"Client\" = <nombre>.\n2. Filtro rango últimas 24h.\n\n**Qué validar:**\n- Ves: creación del cliente, invitaciones, asignaciones, conexión Lemlist.\n- Cada fila tiene actor_user_id correcto.\n\n## Paso 16 — Buscar quién aprobó un content específico\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenario 1\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** algún content fue aprobado por el client_approver.\n\n**Qué hacer:**\n1. `/activity` → filtro tipo `content_approved`.\n2. Busca el content por ID.\n\n**Qué validar:**\n- Fila visible con actor_user_id = el client_approver.\n- Timestamp coherente.\n\n## Paso 17 — Verificar acceso bloqueado para no-superadmin\n**Bloque:** [Activity Log](../14-activity-log.md) — control acceso\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Logout, login con scientist.\n2. Intenta entrar a `/activity` o `/team`.\n\n**Qué validar:**\n- 404 o redirect, NO fuga de información.\n\n## Fase 7 — Override administrativo de campañas y vista global\n\nCapacidades exclusivas de superadmin: pausar/reanudar campañas y ver métricas agregadas de TODOS los clientes (Paid vs Organic split).\n\n## Paso 18 — Volver a superadmin: forzar pausa de campaña\n**Bloque:** [Campaigns](../05-campaigns.md) — override admin *(⚫ frozen)*\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** campaña en `running`.\n\n**Qué hacer:**\n1. Re-login superadmin.\n2. `/campaigns` → campaña running → \"Pause\".\n\n**Qué validar:**\n- Estado pasa a `paused`.\n- Solo superadmin puede reanudar.\n\n## Paso 19 — Reanudar campaña pausada\n**Bloque:** [Campaigns](../05-campaigns.md) — override admin *(⚫ frozen)*\n**Tiempo:** 1 min — **Prioridad:** P3\n\n**Qué hacer:**\n1. Campaña en `paused` → \"Resume\".\n\n**Qué validar:**\n- Vuelve a `running`.\n- Envíos continúan donde se quedaron.\n\n## Paso 20 — Vista global de Analytics\n**Bloque:** [Analytics](../06-analytics.md) — Escenario 1 (superadmin)\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/analytics`.\n2. Selector \"All clients\" o sin filtro.\n3. Mira Paid vs Organic split (solo superadmin).\n\n**Qué validar:**\n- Métricas agregadas sin fugar individuales por cliente sin permiso.\n- Paid vs Organic visible.\n\n## Fase 8 — Bajas y cierre\n\nAcciones destructivas: eliminar usuarios cliente, eliminar cliente entero (soft delete), verificar persistencia + logging, y finalmente logout.\n\n## Paso 21 — Eliminar un client_user (cuidado: no último approver)\n**Bloque:** [Clients](../12-clients.md) — Escenario 6\n**Tiempo:** 2 min — **Prioridad:** P1\n\n**Qué hacer:**\n1. Ficha cliente → Client User → \"Remove access\" en un commenter (no approver).\n\n**Qué validar:**\n- Pierde acceso.\n- Si intentas eliminar el último `client_approver`: BLOQUEADO.\n\n## Paso 22 — Eliminar cliente (acción destructiva)\n**Bloque:** [Clients](../12-clients.md) — Escenario 7\n**Tiempo:** 2 min — **Prioridad:** P2\n**Pre:** cliente de test que no te importa.\n\n**Qué hacer:**\n1. Ficha → \"Delete client\" → doble confirm.\n\n**Qué validar:**\n- Soft delete: `clients.deleted_at` se setea.\n- Contenido del cliente queda OCULTO en listas pero accesible en BD.\n- Usuarios cliente pierden acceso.\n\n## Paso 23 — Verificar persistencia tras delete soft\n**Bloque:** Múltiple\n**Tiempo:** 3 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Tras paso 22, login como scientist asignado → ¿ves el cliente eliminado?\n2. Login client_approver del cliente eliminado → ¿puedes entrar?\n\n**Qué validar:**\n- Cliente eliminado NO aparece en listas.\n- Su client_approver recibe redirect / 403.\n- Datos persisten en BD para auditoría.\n\n## Paso 24 — Verificar Activity Log capturó la eliminación\n**Bloque:** [Activity Log](../14-activity-log.md) — Escenario 1\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. `/activity` → busca `event_type=client_deleted`.\n\n**Qué validar:**\n- Fila visible con timestamp y actor_user_id = tú.\n\n## Paso 25 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`.\n- Cache cleared.\n",
       "steps": [
         {
           "n": 1,
           "title": "Login",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio de sesión",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 2",
@@ -1895,6 +2206,8 @@ window.__QA_DATA = {
         {
           "n": 2,
           "title": "Ver SuperadminOnboardingGuide (si primera vez)",
+          "phaseNumber": 1,
+          "phaseTitle": "Inicio de sesión",
           "blockName": "Dashboard",
           "blockHref": "../01-dashboard.md",
           "scenario": "Escenario 6",
@@ -1906,6 +2219,8 @@ window.__QA_DATA = {
         {
           "n": 3,
           "title": "Invitar primer miembro del equipo",
+          "phaseNumber": 2,
+          "phaseTitle": "Construir el equipo interno",
           "blockName": "Team",
           "blockHref": "../13-team.md",
           "scenario": "Escenario 1",
@@ -1917,6 +2232,8 @@ window.__QA_DATA = {
         {
           "n": 4,
           "title": "Invitar segundo miembro con email existente",
+          "phaseNumber": 2,
+          "phaseTitle": "Construir el equipo interno",
           "blockName": "Team",
           "blockHref": "../13-team.md",
           "scenario": "Escenario 1 (variante)",
@@ -1928,6 +2245,8 @@ window.__QA_DATA = {
         {
           "n": 5,
           "title": "Invitar designer y marketing",
+          "phaseNumber": 2,
+          "phaseTitle": "Construir el equipo interno",
           "blockName": "Team",
           "blockHref": "../13-team.md",
           "scenario": "Escenario 1 (repetición)",
@@ -1939,6 +2258,8 @@ window.__QA_DATA = {
         {
           "n": 6,
           "title": "Crear cliente desde cero",
+          "phaseNumber": 3,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 1",
@@ -1950,6 +2271,8 @@ window.__QA_DATA = {
         {
           "n": 7,
           "title": "Configurar kickoff + invitar client_approver",
+          "phaseNumber": 3,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenarios 2 y 3",
@@ -1961,6 +2284,8 @@ window.__QA_DATA = {
         {
           "n": 8,
           "title": "Conectar Lemlist sandbox al cliente",
+          "phaseNumber": 3,
+          "phaseTitle": "Alta completa de un cliente nuevo",
           "blockName": "Settings",
           "blockHref": "../11-settings.md",
           "scenario": "Escenario 3",
@@ -1972,6 +2297,8 @@ window.__QA_DATA = {
         {
           "n": 9,
           "title": "Verificar setup desde otro rol (impersonate)",
+          "phaseNumber": 4,
+          "phaseTitle": "Verificación y gestión continuada del equipo",
           "blockName": null,
           "blockHref": null,
           "scenario": null,
@@ -1983,6 +2310,8 @@ window.__QA_DATA = {
         {
           "n": 10,
           "title": "Eliminar a un miembro del team (cuidado: NO último superadmin)",
+          "phaseNumber": 4,
+          "phaseTitle": "Verificación y gestión continuada del equipo",
           "blockName": "Team",
           "blockHref": "../13-team.md",
           "scenario": "Escenario 4",
@@ -1994,6 +2323,8 @@ window.__QA_DATA = {
         {
           "n": 11,
           "title": "Cambiar rol de un miembro",
+          "phaseNumber": 4,
+          "phaseTitle": "Verificación y gestión continuada del equipo",
           "blockName": "Team",
           "blockHref": "../13-team.md",
           "scenario": "Escenario 3",
@@ -2005,6 +2336,8 @@ window.__QA_DATA = {
         {
           "n": 12,
           "title": "Activar addons en cliente",
+          "phaseNumber": 5,
+          "phaseTitle": "Activar addons y compartir recursos con el cliente",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 4",
@@ -2016,6 +2349,8 @@ window.__QA_DATA = {
         {
           "n": 13,
           "title": "Subir Resource visible para TODOS los clientes",
+          "phaseNumber": 5,
+          "phaseTitle": "Activar addons y compartir recursos con el cliente",
           "blockName": "Resources",
           "blockHref": "../10-resources.md",
           "scenario": "Escenario 2 (variante)",
@@ -2027,6 +2362,8 @@ window.__QA_DATA = {
         {
           "n": 14,
           "title": "Cambiar visibility de un resource",
+          "phaseNumber": 5,
+          "phaseTitle": "Activar addons y compartir recursos con el cliente",
           "blockName": "Resources",
           "blockHref": "../10-resources.md",
           "scenario": "Escenario 3",
@@ -2038,6 +2375,8 @@ window.__QA_DATA = {
         {
           "n": 15,
           "title": "Auditar cambios del cliente nuevo en Activity Log",
+          "phaseNumber": 6,
+          "phaseTitle": "Auditoría y control de acceso",
           "blockName": "Activity Log",
           "blockHref": "../14-activity-log.md",
           "scenario": "Escenarios 1 y 2",
@@ -2049,6 +2388,8 @@ window.__QA_DATA = {
         {
           "n": 16,
           "title": "Buscar quién aprobó un content específico",
+          "phaseNumber": 6,
+          "phaseTitle": "Auditoría y control de acceso",
           "blockName": "Activity Log",
           "blockHref": "../14-activity-log.md",
           "scenario": "Escenario 1",
@@ -2060,6 +2401,8 @@ window.__QA_DATA = {
         {
           "n": 17,
           "title": "Verificar acceso bloqueado para no-superadmin",
+          "phaseNumber": 6,
+          "phaseTitle": "Auditoría y control de acceso",
           "blockName": "Activity Log",
           "blockHref": "../14-activity-log.md",
           "scenario": "control acceso",
@@ -2071,6 +2414,8 @@ window.__QA_DATA = {
         {
           "n": 18,
           "title": "Volver a superadmin: forzar pausa de campaña",
+          "phaseNumber": 7,
+          "phaseTitle": "Override administrativo de campañas y vista global",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "override admin *(⚫ frozen)*",
@@ -2082,6 +2427,8 @@ window.__QA_DATA = {
         {
           "n": 19,
           "title": "Reanudar campaña pausada",
+          "phaseNumber": 7,
+          "phaseTitle": "Override administrativo de campañas y vista global",
           "blockName": "Campaigns",
           "blockHref": "../05-campaigns.md",
           "scenario": "override admin *(⚫ frozen)*",
@@ -2093,6 +2440,8 @@ window.__QA_DATA = {
         {
           "n": 20,
           "title": "Vista global de Analytics",
+          "phaseNumber": 7,
+          "phaseTitle": "Override administrativo de campañas y vista global",
           "blockName": "Analytics",
           "blockHref": "../06-analytics.md",
           "scenario": "Escenario 1 (superadmin)",
@@ -2104,6 +2453,8 @@ window.__QA_DATA = {
         {
           "n": 21,
           "title": "Eliminar un client_user (cuidado: no último approver)",
+          "phaseNumber": 8,
+          "phaseTitle": "Bajas y cierre",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 6",
@@ -2115,6 +2466,8 @@ window.__QA_DATA = {
         {
           "n": 22,
           "title": "Eliminar cliente (acción destructiva)",
+          "phaseNumber": 8,
+          "phaseTitle": "Bajas y cierre",
           "blockName": "Clients",
           "blockHref": "../12-clients.md",
           "scenario": "Escenario 7",
@@ -2126,6 +2479,8 @@ window.__QA_DATA = {
         {
           "n": 23,
           "title": "Verificar persistencia tras delete soft",
+          "phaseNumber": 8,
+          "phaseTitle": "Bajas y cierre",
           "blockName": null,
           "blockHref": null,
           "scenario": null,
@@ -2137,6 +2492,8 @@ window.__QA_DATA = {
         {
           "n": 24,
           "title": "Verificar Activity Log capturó la eliminación",
+          "phaseNumber": 8,
+          "phaseTitle": "Bajas y cierre",
           "blockName": "Activity Log",
           "blockHref": "../14-activity-log.md",
           "scenario": "Escenario 1",
@@ -2148,6 +2505,8 @@ window.__QA_DATA = {
         {
           "n": 25,
           "title": "Logout",
+          "phaseNumber": 8,
+          "phaseTitle": "Bajas y cierre",
           "blockName": "Auth",
           "blockHref": "../15-auth.md",
           "scenario": "Escenario 4",
@@ -2156,11 +2515,94 @@ window.__QA_DATA = {
           "precondition": null,
           "raw": "## Paso 25 — Logout\n**Bloque:** [Auth](../15-auth.md) — Escenario 4\n**Tiempo:** 1 min — **Prioridad:** P2\n\n**Qué hacer:**\n1. Logout.\n\n**Qué validar:**\n- Redirige a `/auth`.\n- Cache cleared."
         }
+      ],
+      "phases": [
+        {
+          "number": 1,
+          "title": "Inicio de sesión",
+          "description": "Login y verificación del dashboard especializado de superadmin.",
+          "stepNumbers": [
+            1,
+            2
+          ]
+        },
+        {
+          "number": 2,
+          "title": "Construir el equipo interno",
+          "description": "Invitar a los miembros del equipo Simbionte (scientist, designer, marketing). Necesario antes de poder asignarlos a clientes en la siguiente fase.",
+          "stepNumbers": [
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "number": 3,
+          "title": "Alta completa de un cliente nuevo",
+          "description": "Sub-flow crítico: crear cliente desde cero, configurar kickoff URL, invitar al client_approver y conectar la herramienta de campañas (Lemlist). Si algún paso de esta fase falla, el cliente no puede arrancar su onboarding.",
+          "stepNumbers": [
+            6,
+            7,
+            8
+          ]
+        },
+        {
+          "number": 4,
+          "title": "Verificación y gestión continuada del equipo",
+          "description": "Comprobar permisos cruzados, eliminar miembros del team y cambiar roles. Asegura que el ABAC (access control) funciona y los cambios se aplican en cascada.",
+          "stepNumbers": [
+            9,
+            10,
+            11
+          ]
+        },
+        {
+          "number": 5,
+          "title": "Activar addons y compartir recursos con el cliente",
+          "description": "Activar Blog/Newsletter opcionales y subir recursos (PDFs, plantillas) con visibilidad granular (todos los clientes o subset).",
+          "stepNumbers": [
+            12,
+            13,
+            14
+          ]
+        },
+        {
+          "number": 6,
+          "title": "Auditoría y control de acceso",
+          "description": "Verificar que el Activity Log captura todos los eventos importantes y que no-superadmins no pueden entrar a `/activity` ni `/team`.",
+          "stepNumbers": [
+            15,
+            16,
+            17
+          ]
+        },
+        {
+          "number": 7,
+          "title": "Override administrativo de campañas y vista global",
+          "description": "Capacidades exclusivas de superadmin: pausar/reanudar campañas y ver métricas agregadas de TODOS los clientes (Paid vs Organic split).",
+          "stepNumbers": [
+            18,
+            19,
+            20
+          ]
+        },
+        {
+          "number": 8,
+          "title": "Bajas y cierre",
+          "description": "Acciones destructivas: eliminar usuarios cliente, eliminar cliente entero (soft delete), verificar persistencia + logging, y finalmente logout.",
+          "stepNumbers": [
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        }
       ]
     }
   ],
   "glossary": "\n# Glosario QA — Simbionte OS\n\nDefiniciones canónicas de los términos que aparecen en los docs `qa/NN-*.md`. Cada doc enlaza aquí **la primera vez** que use un término, no en cada aparición.\n\nConvención: los términos cliente-friendly (la mayoría) están en mayúscula limpia; los términos técnicos llevan formato `monoespaciado` para que el cliente sepa que es un nombre interno del sistema.\n\n---\n\n## ACV {#acv}\n\nAnnual Contract Value. Valor anual del contrato de un cliente con Simbionte. Campo numérico en la ficha del cliente, usado por dashboards internos para priorización y reporting comercial.\n\n## Add-on {#addon}\n\nMódulo opcional del producto que un cliente puede tener activado o no: **Blog** y **Newsletter** son los dos add-ons existentes. Se activan en la ficha del cliente con flags `addon_blog` / `addon_newsletter`. Si están desactivados, la sección no aparece en el sidebar del cliente.\n\n## AI Variable {#ai-variable}\n\nMarcador de personalización que se inserta en mensajes de **Campaigns**. Tiene forma `[company_name]`, `[pain]`, `[segment]`, etc. Cuando la campaña se ejecuta en Lemlist/Enginy, cada placeholder se rellena por contacto leyendo el **Playbook** del cliente. Las AI Variables tienen su propio flujo de aprobación: el cliente las aprueba **una vez** y a partir de ahí se pueden usar en cualquier campaña.\n\n## Approval {#approval}\n\nAcción de un usuario `client_approver` (o `superadmin`) que valida una pieza de contenido, un mensaje de campaña, o una AI Variable y la mueve del estado `pending_approval` al estado `approved`. Las approvals quedan registradas con `actor_user_id`, `decision`, `comment` y `timestamp` para auditoría.\n\n## Channel {#channel}\n\nCanal de envío de un mensaje de campaña: actualmente **LinkedIn** (DM o mensaje nativo) o **Email**. Una campaña puede mezclar canales en su secuencia (p.ej. msg1 LinkedIn, msg2 Email).\n\n## Client {#client}\n\nEmpresa contratante de Simbionte. Tiene una ficha en `/clients/{id}` con metadatos (industria, web, package, contract status), addons activos y usuarios asociados. Cada **content item** y cada **campaign** pertenece a un client.\n\n## client_approver {#client-approver}\n\nRol de usuario externo (del cliente) que puede revisar y **aprobar** contenido y campañas. Es el rol pivote del flujo de QA cliente.\n\n## client_commenter {#client-commenter}\n\nRol de usuario externo (del cliente) que puede **ver y comentar** contenido y campañas, pero **no aprobar**. Útil cuando el cliente quiere que su equipo participe sin dar autoridad de aprobación a todos.\n\n## Content Item {#content-item}\n\nUna pieza de contenido individual (post de LinkedIn, artículo de blog, edición de newsletter). Vive en `/content`. Atraviesa una **máquina de estados** definida en [ContentStates_Complete.md](../ContentStates_Complete.md): `copy_in_progress` → `copy_completed` → `design_pending` → `design_completed` → `internal_review` → `pending_review` → `approved` → `scheduled` → `published`.\n\n## ContractStatus {#contract-status}\n\nFase comercial de un cliente. Valores: `Onboarding`, `Active`, `Paused`, `Churned`. Mientras un cliente está en `Onboarding`, el módulo **Campaigns** no le crea campañas y el sidebar muestra el OnboardingChecklist.\n\n## Demo data {#demo-data}\n\nDatos de ejemplo marcados con `is_demo_data=true` en BD. Se ven en cuentas de test/seed para que el cliente o el equipo vean la UI con contenido realista sin contaminar producción. Filtrables en listas client-facing.\n\n## Edge Function {#edge-function}\n\nFunción Supabase (Deno runtime) que ejecuta lógica en el backend, fuera de la app React. Las usamos para webhooks (Lemlist, Enginy), syncs periódicos y operaciones con secrets (API keys). Vive en `supabase/functions/`.\n\n## Enginy {#enginy}\n\nUna de las dos herramientas externas que Simbionte usa para ejecutar campañas outbound. Más completa que Lemlist, se asigna a clientes con paquete premium. Cuesta unos €500/mes + €50/experto.\n\n## Healthy / Degraded / Broken {#integration-health}\n\nEstados de salud de una **integración** (Lemlist o Enginy) en `client_integrations`. `healthy` significa que el último ping/sync ha sido OK. `degraded` indica latencia alta o respuestas parciales. `broken` significa que la API key no autentica o el endpoint devuelve error. Una campaña no puede pasar a `running` si la integración del cliente no está `healthy`.\n\n## ICP {#icp}\n\nIdeal Customer Profile. Perfil del lead al que apuntas con campañas outbound. Tiene rol (p.ej. \"R&D Manager\"), responsabilidad real, segmento, geografía y pains. Vive en la tabla `icps`, hidratado desde el **Playbook** del cliente. Una campaña puede apuntar a uno o varios ICPs.\n\n## Kickoff Meeting {#kickoff}\n\nReunión inicial entre el equipo Simbionte y un cliente nuevo. Su URL (Cal.com / Calendly) se configura en la ficha del cliente. Sin esta URL, el cliente no puede completar el step 4 de su onboarding (\"book a meeting\"). Cuando el cliente reserva, se actualiza `kickoff_meeting_booked_at`.\n\n## Lemlist {#lemlist}\n\nUna de las dos herramientas externas que Simbionte usa para ejecutar campañas outbound. Más ligera, se asigna a clientes con paquete estándar. Cuesta unos €100/mes.\n\n## Lifecycle (de campaña) {#lifecycle}\n\nSub-conjunto de estados que indica que una campaña ya pasó por aprobación y está en producción: `approved`, `running`, `paused`, `completed`. Contrasta con los estados de revisión (`draft`, `pending_approval`).\n\n## OnboardingChecklist {#onboarding}\n\nWidget visible en el Dashboard del cliente mientras está en `ContractStatus=Onboarding`. Cuatro pasos: completar perfil, conectar LinkedIn, rellenar Playbook, reservar meeting. Cuando todos están marcados, aparece la pantalla \"Congrats — you're all set up!\".\n\n## Package {#package}\n\nPlan comercial contratado por un cliente. Determina qué herramienta de campañas se le asigna (Enginy si premium, Lemlist si estándar) y qué addons puede activar. Se setea en la ficha del cliente.\n\n## pending_approval {#pending-approval}\n\nEstado de una campaña, un mensaje de campaña, una AI variable o un content item. Significa que está esperando que el `client_approver` apruebe o pida cambios. Visible al cliente con un badge naranja \"Esperando tu aprobación\".\n\n## pending_review {#pending-review}\n\nEstado de un **content item**. Equivalente a `pending_approval` pero usado específicamente en el flujo de Content (LinkedIn posts). Visible al cliente, esperando su Approve / Request Changes.\n\n## Pillar (de campaña) {#pillar}\n\nCategoría que clasifica una campaña por intención:\n- **warm**: seguimiento a contacto conocido (ya hay relación).\n- **cold**: prospección a contacto nuevo.\n- **trigger**: event-driven, reacciona a un evento externo (p.ej. la empresa target acaba de levantar ronda de financiación).\n\nDetermina tono, urgencia y plantillas sugeridas.\n\n## Playbook {#playbook}\n\nFuente de verdad de la información del cliente. Tiene 6 secciones: Company Info + brand mood, Productos/servicios, ICPs + competidores, Documentos científicos/papers, FAQ, Información de expertos. Versionado: cada update crea una fila nueva en `playbook_versions`, pero la UI siempre muestra la última. Es lo que la IA lee para generar contenido y rellenar AI Variables.\n\n## Profile (LinkedIn) {#profile}\n\nPerfil de LinkedIn que Simbionte gestiona para un cliente. Puede ser de la **company** o de un **experto** (CEO, fundador, científico jefe). Un cliente puede tener varios profiles. Cada content item se asigna a un profile concreto.\n\n## Reply rate {#reply-rate}\n\nKPI principal de una campaña outbound: porcentaje de contactos contactados que han respondido (positivo o no). Se agrega en Analytics.\n\n## row_version {#row-version}\n\nCampo numérico en varias tablas (`campaigns`, `content_items`, etc.) que se incrementa con cada update. Sirve para **optimistic concurrency**: si dos usuarios editan a la vez, el segundo recibe error `40001 STALE_ROW_VERSION_MESSAGE` y debe refrescar y reintentar.\n\n## scientist {#scientist}\n\nRol interno de Simbionte. La persona que escribe el contenido, diseña las campañas y mueve los content items por sus estados internos hasta enviarlos al cliente. Cada cliente tiene un (o varios) scientist asignado.\n\n## Sender Identity {#sender-identity}\n\nIdentidad desde la que se envía un mensaje de campaña (cuenta de LinkedIn o email concreto). Configurada en Settings. Distinta del Profile: el Profile es la **persona representada**, la Sender Identity es la **cuenta de envío**.\n\n## Soft delete {#soft-delete}\n\nBorrado lógico, no físico. Una fila con `deleted_at` no nulo no aparece en queries normales pero sigue en BD para auditoría. Casi todas las tablas de Simbionte usan soft delete.\n\n## superadmin {#superadmin}\n\nRol interno de Simbionte con acceso total: gestión de equipo, de clientes, de activity log, override de cualquier estado, override de RLS donde sea necesario.\n\n## webhook (provider) {#webhook}\n\nEndpoint que Lemlist o Enginy llaman para notificar eventos (mensaje enviado, contacto respondió, campaña terminó). Implementados como edge functions en `supabase/functions/lemlist-*` y `supabase/functions/enginy-*`. Validan firma HMAC, timestamp ±5min y `external_event_id` para idempotencia.\n",
-  "generatedAt": "2026-05-12T19:42:06.631Z",
+  "generatedAt": "2026-05-13T09:29:21.106Z",
   "generatedFromSha": "c1408f9"
 };
 </script>
