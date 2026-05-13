@@ -730,7 +730,77 @@ button.small {
 
 .audit-blocks {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+/* Flow header en audit (banner explicativo) */
+.flow-header {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+.flow-header-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.flow-header-meta {
+  font-size: 12px;
+  color: var(--fg-muted);
+  line-height: var(--leading-base);
+}
+
+.flow-prereqs {
+  background: #fff8e6;
+  border: 1px solid #f3d27d;
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+.flow-prereqs .scenario-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  color: #8a5a00;
+}
+.flow-prereqs ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: var(--leading-base);
+}
+
+/* Empty state cuando no hay flow para el rol */
+.empty-state {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.empty-state p {
+  margin: var(--space-2) 0;
+}
+
+/* Badges adicionales para step cards */
+.badge-block {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: var(--bg-subtle);
+  color: var(--fg-muted);
+  letter-spacing: 0.01em;
+}
+.badge-time {
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--fg-subtle);
+  border: 1px solid var(--border);
 }
 
 .audit-block {
@@ -3790,100 +3860,106 @@ function renderBugContext(context) {
   $("bugContext").innerHTML = `<strong>Contexto:</strong> ${escapeHtml(context.title || "")} — <code>${escapeHtml(context.url || "")}</code>`;
 }
 
-// ===== Audit view (narrative cards + auto-scroll) =====
+// ===== Audit view (flow-driven, orden de producto) =====
+// El audit recorre los STEPS del flow correspondiente al rol elegido.
+// Cada flow ya está en orden topológico (dependencias antes que features
+// dependientes). Esto evita que el cliente vea "Probar conversaciones"
+// antes de "Configurar Lemlist/Enginy".
 function renderAuditView() {
   $("auditSessionLabel").textContent = sessionLabel();
-  const blocks = (window.__QA_DATA?.blocks || [])
-    .filter(b => /^\d{2}-/.test(b.file))
-    .sort((a, b) => a.number - b.number);
 
-  // Inicializar audit state si vacío
-  if (!Object.keys(session.audit).length) {
-    for (const b of blocks) {
-      session.audit[b.slug] = { collapsed: true, scenarios: {} };
-    }
+  const flow = (window.__QA_DATA?.flows || []).find(f => f.role === session.role);
+
+  // Compatibilidad: audits con formato viejo (nested por bloque) → reset
+  if (Array.isArray(session.audit) || (session.audit && session.audit !== Object(session.audit))) {
+    session.audit = {};
+  }
+  // Si tiene formato viejo (keys de slug en lugar de step numbers), reset
+  const sampleKey = Object.keys(session.audit)[0];
+  if (sampleKey && isNaN(parseInt(sampleKey))) {
+    session.audit = {};
   }
 
   const container = $("auditBlocks");
   container.innerHTML = "";
 
-  for (const block of blocks) {
-    const scenarios = extractScenarios(block.body);
-    if (!session.audit[block.slug]) session.audit[block.slug] = { collapsed: true, scenarios: {} };
-    const auditBlock = session.audit[block.slug];
-
-    const blockDiv = document.createElement("div");
-    blockDiv.className = "audit-block" + (auditBlock.collapsed ? "" : " expanded");
-    blockDiv.dataset.slug = block.slug;
-    blockDiv.innerHTML = `
-      <div class="audit-block-header">
-        <span><span class="chevron">▶</span>${String(block.number).padStart(2, "0")} · ${escapeHtml(block.title)}</span>
-        <span class="audit-block-counts" data-counts></span>
+  if (!flow) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <p><strong>No hay flow predefinido para el rol "${escapeHtml(session.role || "(sin rol)")}".</strong></p>
+        <p class="muted small">El audit guiado requiere que elijas un rol específico (client_approver, scientist, designer, marketing, superadmin) — esos respetan el orden de dependencias del producto. Cierra y vuelve a empezar con otro rol.</p>
       </div>
-      <div class="audit-block-body"></div>
     `;
-    const header = blockDiv.querySelector(".audit-block-header");
-    header.addEventListener("click", () => {
-      auditBlock.collapsed = !auditBlock.collapsed;
-      blockDiv.classList.toggle("expanded", !auditBlock.collapsed);
-      saveSession();
-      if (!auditBlock.collapsed) {
-        // Scroll suave al primer escenario sin marcar al expandir
-        setTimeout(() => {
-          const cards = [...blockDiv.querySelectorAll(".scenario-card")];
-          const target = cards.find(c => !c.classList.contains("marked")) || cards[0] || blockDiv;
-          target.scrollIntoView({ behavior: "smooth", block: "start" });
-        }, 120);
-      }
-    });
+    $("auditProgress").innerHTML = "";
+    return;
+  }
 
-    const body = blockDiv.querySelector(".audit-block-body");
-    if (!scenarios.length) {
-      body.innerHTML = '<div class="muted small" style="margin-top:14px">Este bloque no tiene escenarios numerados extraíbles. Audita el bloque libremente desde el doc fuente.</div>';
-    } else {
-      for (const s of scenarios) {
-        body.appendChild(renderScenarioCard(block, s, auditBlock));
-      }
-    }
+  // Header del flow
+  const header = document.createElement("div");
+  header.className = "flow-header";
+  header.innerHTML = `
+    <div class="flow-header-title">${escapeHtml(flow.title)}</div>
+    <div class="flow-header-meta">${flow.steps.length} pasos · ~${flow.duration_min} min · orden de producto (cada paso depende del anterior)</div>
+  `;
+  container.appendChild(header);
 
-    container.appendChild(blockDiv);
+  // Prerequisites del flow entero (si hay)
+  if (flow.prerequisites?.length) {
+    const pre = document.createElement("div");
+    pre.className = "flow-prereqs";
+    pre.innerHTML = `
+      <div class="scenario-label">Antes de empezar este flow asegúrate de:</div>
+      <ul>${flow.prerequisites.map(p => `<li>${escapeHtml(p)}</li>`).join("")}</ul>
+    `;
+    container.appendChild(pre);
+  }
+
+  // Render cada step en orden
+  for (const step of flow.steps) {
+    container.appendChild(renderFlowStepCard(step, flow));
   }
 
   updateAuditProgress();
 }
 
-function renderScenarioCard(block, s, auditBlock) {
-  const current = auditBlock.scenarios[s.n] || {};
+function renderFlowStepCard(step, flow) {
+  const current = session.audit[step.n] || {};
   const scDiv = document.createElement("div");
-  scDiv.className = "scenario-card" + (current.result ? " marked result-" + current.result : "");
-  scDiv.dataset.scenario = s.n;
+  scDiv.className = "scenario-card flow-step" + (current.result ? " marked result-" + current.result : "");
+  scDiv.dataset.step = step.n;
+
+  // Extraer "Qué validar:" del raw si está
+  let validar = null;
+  if (step.raw) {
+    const m = step.raw.match(/\*\*Qu[eé] validar:\*\*\s*\n([\s\S]*?)(?=\n\s*\n\*\*|\n\s*\n##|$)/);
+    if (m) validar = m[1].trim();
+  }
 
   const metaHtml = `
     <div class="scenario-meta">
-      <span class="badge-num">Escenario ${s.n}</span>
-      ${s.priority ? `<span class="badge-priority ${s.priority.toLowerCase()}">${s.priority}</span>` : ""}
-      ${s.who ? `<span class="badge-role">Como ${escapeHtml(s.who)}</span>` : ""}
+      <span class="badge-num">Paso ${step.n}/${flow.steps.length}</span>
+      ${step.priority ? `<span class="badge-priority ${step.priority.toLowerCase()}">${step.priority}</span>` : ""}
+      ${step.blockName ? `<span class="badge-block">${escapeHtml(step.blockName)}</span>` : ""}
+      ${step.time ? `<span class="badge-time">${escapeHtml(step.time)}</span>` : ""}
     </div>
   `;
 
-  const desire = titleToDesire(s.title);
-  const desireDisplay = desire.charAt(0).toUpperCase() + desire.slice(1);
-  const titleHtml = `<h4 class="scenario-title">Quiero ${escapeHtml(desire)}</h4>`;
+  const titleHtml = `<h4 class="scenario-title">${escapeHtml(step.title)}</h4>`;
 
   let bodyHtml = "";
-  if (s.preconditions) {
+  if (step.precondition) {
     bodyHtml += `
       <div class="scenario-section">
-        <div class="scenario-label">Cuando</div>
-        <div class="scenario-body">${MdRender.toHtml(s.preconditions)}</div>
+        <div class="scenario-label">Antes necesitas</div>
+        <div class="scenario-body">${MdRender.toHtml(step.precondition)}</div>
       </div>
     `;
   }
-  if (s.expected) {
+  if (validar) {
     bodyHtml += `
       <div class="scenario-section">
-        <div class="scenario-label">Entonces debería ver</div>
-        <div class="scenario-body">${MdRender.toHtml(s.expected)}</div>
+        <div class="scenario-label">Qué deberías ver</div>
+        <div class="scenario-body">${MdRender.toHtml(validar)}</div>
       </div>
     `;
   }
@@ -3899,13 +3975,11 @@ function renderScenarioCard(block, s, auditBlock) {
 
   scDiv.innerHTML = metaHtml + titleHtml + bodyHtml + decisionHtml;
 
-  // Decision buttons
   scDiv.querySelectorAll(".decision-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const result = btn.dataset.result;
-      if (!auditBlock.scenarios[s.n]) auditBlock.scenarios[s.n] = {};
-      auditBlock.scenarios[s.n].result = result;
-      // Actualiza solo este card visualmente (no full re-render)
+      if (!session.audit[step.n]) session.audit[step.n] = {};
+      session.audit[step.n].result = result;
       scDiv.classList.remove("marked", "result-pass", "result-fail", "result-na");
       scDiv.classList.add("marked", "result-" + result);
       scDiv.querySelectorAll(".decision-btn").forEach(b =>
@@ -3913,14 +3987,13 @@ function renderScenarioCard(block, s, auditBlock) {
       );
       updateAuditProgress();
       saveSession();
-      // Auto-scroll al siguiente
-      autoScrollToNextScenario(scDiv);
+      autoScrollToNextStep(scDiv);
     });
   });
 
   scDiv.querySelector(".scenario-comment").addEventListener("input", e => {
-    if (!auditBlock.scenarios[s.n]) auditBlock.scenarios[s.n] = {};
-    auditBlock.scenarios[s.n].comment = e.target.value;
+    if (!session.audit[step.n]) session.audit[step.n] = {};
+    session.audit[step.n].comment = e.target.value;
     saveSession();
   });
 
@@ -3928,35 +4001,26 @@ function renderScenarioCard(block, s, auditBlock) {
 }
 
 function updateAuditProgress() {
-  const blocks = (window.__QA_DATA?.blocks || []).filter(b => /^\d{2}-/.test(b.file));
-  let total = 0, marked = 0, pass = 0, fail = 0, na = 0;
-  for (const b of blocks) {
-    const scenarios = extractScenarios(b.body);
-    total += scenarios.length;
-    const audit = session.audit[b.slug];
-    if (!audit) continue;
-    let blockMarked = 0;
-    for (const s of scenarios) {
-      const r = audit.scenarios[s.n]?.result;
-      if (r) {
-        marked++;
-        blockMarked++;
-        if (r === "pass") pass++;
-        else if (r === "fail") fail++;
-        else if (r === "na") na++;
-      }
-    }
-    const blockDiv = document.querySelector(`.audit-block[data-slug="${b.slug}"]`);
-    if (blockDiv) {
-      const counts = blockDiv.querySelector("[data-counts]");
-      if (counts) counts.textContent = `${blockMarked}/${scenarios.length}`;
-      blockDiv.classList.toggle("complete", scenarios.length > 0 && blockMarked === scenarios.length);
+  const flow = (window.__QA_DATA?.flows || []).find(f => f.role === session.role);
+  if (!flow) {
+    $("auditProgress").innerHTML = "";
+    return;
+  }
+  const total = flow.steps.length;
+  let marked = 0, pass = 0, fail = 0, na = 0;
+  for (const step of flow.steps) {
+    const r = session.audit[step.n]?.result;
+    if (r) {
+      marked++;
+      if (r === "pass") pass++;
+      else if (r === "fail") fail++;
+      else if (r === "na") na++;
     }
   }
   const pct = total > 0 ? Math.round((marked / total) * 100) : 0;
   $("auditProgress").innerHTML = `
     <div class="audit-counters">
-      <span><strong>${marked}/${total}</strong> escenarios</span>
+      <span><strong>${marked}/${total}</strong> pasos</span>
       <span style="color:var(--pass)">✓ ${pass}</span>
       <span style="color:var(--fail)">✗ ${fail}</span>
       <span style="color:var(--skip)">— ${na}</span>
@@ -3965,30 +4029,11 @@ function updateAuditProgress() {
   `;
 }
 
-function autoScrollToNextScenario(currentCard) {
+function autoScrollToNextStep(currentCard) {
   setTimeout(() => {
-    // 1. Buscar siguiente escenario en el mismo bloque
     let next = currentCard.nextElementSibling;
-    while (next && !next.classList.contains("scenario-card")) {
+    while (next && !next.classList.contains("flow-step")) {
       next = next.nextElementSibling;
-    }
-    // 2. Si no hay, ir al primer escenario sin marcar del siguiente bloque (lo expande)
-    if (!next) {
-      const block = currentCard.closest(".audit-block");
-      let nextBlock = block?.nextElementSibling;
-      while (nextBlock && !nextBlock.classList.contains("audit-block")) {
-        nextBlock = nextBlock.nextElementSibling;
-      }
-      if (nextBlock) {
-        if (!nextBlock.classList.contains("expanded")) {
-          const slug = nextBlock.dataset.slug;
-          if (session.audit[slug]) session.audit[slug].collapsed = false;
-          nextBlock.classList.add("expanded");
-          saveSession();
-        }
-        const cards = [...nextBlock.querySelectorAll(".scenario-card")];
-        next = cards.find(c => !c.classList.contains("marked")) || cards[0] || nextBlock;
-      }
     }
     if (next) {
       next.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4007,23 +4052,20 @@ function showFinal() {
       P0: ${counts.P0} · P1: ${counts.P1} · P2: ${counts.P2} · P3: ${counts.P3}
     `;
   } else {
-    const blocks = (window.__QA_DATA?.blocks || []).filter(b => /^\d{2}-/.test(b.file));
+    const flow = (window.__QA_DATA?.flows || []).find(f => f.role === session.role);
     let total = 0, pass = 0, fail = 0, na = 0;
-    for (const b of blocks) {
-      const scenarios = extractScenarios(b.body);
-      total += scenarios.length;
-      const audit = session.audit[b.slug];
-      if (audit) {
-        for (const k in audit.scenarios) {
-          const r = audit.scenarios[k].result;
-          if (r === "pass") pass++;
-          else if (r === "fail") fail++;
-          else if (r === "na") na++;
-        }
+    if (flow) {
+      total = flow.steps.length;
+      for (const step of flow.steps) {
+        const r = session.audit[step.n]?.result;
+        if (r === "pass") pass++;
+        else if (r === "fail") fail++;
+        else if (r === "na") na++;
       }
     }
     $("finalSummary").innerHTML = `
-      Audit matrix · <strong>${pass + fail + na}/${total}</strong> escenarios marcados ·
+      ${flow ? `Audit del flow <strong>${escapeHtml(flow.title)}</strong>` : "Audit"} ·
+      <strong>${pass + fail + na}/${total}</strong> pasos marcados ·
       ✅ ${pass} · ❌ ${fail} · ⏭ ${na}
     `;
   }
@@ -4068,31 +4110,34 @@ function buildReport() {
     };
   }
 
-  // audit mode
-  const blocks = (window.__QA_DATA?.blocks || []).filter(b => /^\d{2}-/.test(b.file));
-  const auditReport = [];
-  for (const b of blocks.sort((a, b) => a.number - b.number)) {
-    const scenarios = extractScenarios(b.body);
-    const audit = session.audit[b.slug] || { scenarios: {} };
-    auditReport.push({
-      block: b.title,
-      slug: b.slug,
-      scenarios: scenarios.map(s => ({
-        n: s.n,
-        title: s.title,
-        result: audit.scenarios[s.n]?.result || null,
-        comment: audit.scenarios[s.n]?.comment || "",
-      })),
-    });
-  }
+  // audit mode (flow-driven)
+  const flow = (window.__QA_DATA?.flows || []).find(f => f.role === session.role);
+  const auditReport = {
+    flow: flow?.title || null,
+    flowSlug: flow?.slug || null,
+    role: session.role,
+    duration_min: flow?.duration_min || null,
+    prerequisites: flow?.prerequisites || [],
+    steps: (flow?.steps || []).map(step => ({
+      n: step.n,
+      title: step.title,
+      block: step.blockName || null,
+      blockHref: step.blockHref || null,
+      scenario: step.scenario || null,
+      priority: step.priority || null,
+      precondition: step.precondition || null,
+      result: session.audit[step.n]?.result || null,
+      comment: session.audit[step.n]?.comment || "",
+    })),
+  };
   return { meta, audit: auditReport };
 }
 
 function reportToMarkdown(report) {
   const lines = [];
-  lines.push(`# Reporte QA Lab — ${report.meta.mode === "bugs" ? "Bug tickets" : "Audit matrix"}`);
+  const titlePart = report.meta.mode === "bugs" ? "Bug tickets" : `Audit · ${report.audit?.flow || report.meta.role}`;
+  lines.push(`# Reporte QA Lab — ${titlePart}`);
   lines.push("");
-  lines.push(`- **Cliente:** ${report.meta.client}`);
   lines.push(`- **Tester:** ${report.meta.tester}`);
   lines.push(`- **Rol:** ${report.meta.role}`);
   lines.push(`- **Inicio:** ${report.meta.startedAt}`);
@@ -4144,31 +4189,36 @@ function reportToMarkdown(report) {
       }
     }
   } else {
-    // audit
-    lines.push(`## Audit matrix`);
+    // audit (flow-driven)
+    const audit = report.audit || {};
+    if (audit.flow) {
+      lines.push(`## Flow: ${audit.flow}`);
+      lines.push(`*Recorrido completo del rol \`${audit.role}\` — ${audit.steps.length} pasos en orden de producto.*`);
+      lines.push("");
+    }
+    if (audit.prerequisites?.length) {
+      lines.push(`### Prerequisites del flow`);
+      for (const p of audit.prerequisites) lines.push(`- ${p}`);
+      lines.push("");
+    }
+    lines.push(`## Pasos`);
     lines.push("");
-    lines.push(`| Bloque | Escenario | Resultado | Comentario |`);
-    lines.push(`|--------|-----------|-----------|------------|`);
-    for (const block of report.audit) {
-      for (const s of block.scenarios) {
-        const icon = s.result === "pass" ? "✅" : s.result === "fail" ? "❌" : s.result === "na" ? "⏭" : "⚪";
-        const comment = (s.comment || "").replace(/\|/g, "\\|").replace(/\n/g, " ");
-        lines.push(`| ${block.block} | ${s.n} — ${s.title} | ${icon} ${s.result || "—"} | ${comment} |`);
-      }
+    lines.push(`| # | Paso | Bloque | Prioridad | Resultado | Comentario |`);
+    lines.push(`|---|------|--------|-----------|-----------|------------|`);
+    for (const s of audit.steps || []) {
+      const icon = s.result === "pass" ? "✅" : s.result === "fail" ? "❌" : s.result === "na" ? "⏭" : "⚪";
+      const comment = (s.comment || "").replace(/\|/g, "\\|").replace(/\n/g, " ");
+      lines.push(`| ${s.n} | ${s.title} | ${s.block || "—"} | ${s.priority || "—"} | ${icon} ${s.result || "—"} | ${comment} |`);
     }
     lines.push("");
     // Failures resumidos al final
-    const fails = [];
-    for (const block of report.audit) {
-      for (const s of block.scenarios) {
-        if (s.result === "fail") fails.push({ block: block.block, ...s });
-      }
-    }
+    const fails = (audit.steps || []).filter(s => s.result === "fail");
     if (fails.length) {
       lines.push(`## Fallos (${fails.length})`);
       lines.push("");
       for (const f of fails) {
-        lines.push(`- **${f.block} · Escenario ${f.n}** — ${f.title}`);
+        lines.push(`- **Paso ${f.n} · ${f.block || "—"}** — ${f.title}`);
+        if (f.precondition) lines.push(`  - Pre: ${f.precondition.replace(/\n/g, " ")}`);
         if (f.comment) lines.push(`  - ${f.comment}`);
       }
     }
@@ -4193,13 +4243,13 @@ function downloadBlob(blob, filename) {
 
 function exportJson() {
   const report = buildReport();
-  const stub = `qa-lab-${report.meta.mode}-${(report.meta.client || "x").replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
+  const stub = `qa-lab-${report.meta.mode}-${(report.meta.tester || "anon").toLowerCase().replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
   downloadFile(JSON.stringify(report, null, 2), `${stub}.json`, "application/json");
 }
 
 function exportMd() {
   const report = buildReport();
-  const stub = `qa-lab-${report.meta.mode}-${(report.meta.client || "x").replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
+  const stub = `qa-lab-${report.meta.mode}-${(report.meta.tester || "anon").toLowerCase().replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
   downloadFile(reportToMarkdown(report), `${stub}.md`, "text/markdown");
 }
 
@@ -4212,8 +4262,8 @@ const RESULT_EMOJI = { pass: "✅", fail: "❌", na: "⏭", null: "⚪", undefin
 
 function notionMarkdownForBugs(report) {
   const lines = [];
-  const stub = `qa-lab-${report.meta.client?.replace(/\s+/g, "-") || "session"}-${report.meta.completedAt.slice(0, 10)}`;
-  lines.push(`# 🐛 QA Lab — ${report.meta.client || "Sesión"}`);
+  const stub = `qa-lab-bugs-${report.meta.role || "session"}-${report.meta.completedAt.slice(0, 10)}`;
+  lines.push(`# 🐛 QA Lab — Bug tickets (${report.meta.role || "rol"})`);
   lines.push("");
   lines.push(`**Tester:** ${report.meta.tester || "—"}  `);
   lines.push(`**Rol:** ${report.meta.role || "—"}  `);
@@ -4302,27 +4352,39 @@ function notionMarkdownForBugs(report) {
 
 function notionMarkdownForAudit(report) {
   const lines = [];
-  const stub = `qa-lab-audit-${report.meta.client?.replace(/\s+/g, "-") || "session"}-${report.meta.completedAt.slice(0, 10)}`;
+  const audit = report.audit || {};
+  const flowSlug = audit.flowSlug || "session";
+  const stub = `qa-lab-audit-${flowSlug}-${report.meta.completedAt.slice(0, 10)}`;
 
-  lines.push(`# 📋 QA Lab Audit — ${report.meta.client || "Sesión"}`);
+  lines.push(`# 📋 QA Lab Audit — ${audit.flow || `Rol: ${audit.role || "—"}`}`);
   lines.push("");
   lines.push(`**Tester:** ${report.meta.tester || "—"}  `);
-  lines.push(`**Rol:** ${report.meta.role || "—"}  `);
+  lines.push(`**Rol:** ${audit.role || "—"}  `);
+  if (audit.duration_min) lines.push(`**Duración estimada del flow:** ~${audit.duration_min} min  `);
   lines.push(`**Fecha:** ${report.meta.completedAt.slice(0, 10)}  `);
   lines.push(`**Versión QA data:** \`${report.meta.generatedFromSha}\``);
   lines.push("");
 
-  // Resumen contadores
-  let total = 0, pass = 0, fail = 0, na = 0;
-  for (const b of report.audit) {
-    for (const s of b.scenarios) {
-      total++;
-      if (s.result === "pass") pass++;
-      else if (s.result === "fail") fail++;
-      else if (s.result === "na") na++;
-    }
+  if (audit.prerequisites?.length) {
+    lines.push(`## Prerequisites del flow`);
+    lines.push("");
+    lines.push(`*Estas dependencias deben estar resueltas antes de empezar el audit:*`);
+    lines.push("");
+    for (const p of audit.prerequisites) lines.push(`- ${p}`);
+    lines.push("");
   }
+
+  // Resumen contadores
+  const steps = audit.steps || [];
+  let pass = 0, fail = 0, na = 0;
+  for (const s of steps) {
+    if (s.result === "pass") pass++;
+    else if (s.result === "fail") fail++;
+    else if (s.result === "na") na++;
+  }
+  const total = steps.length;
   const unmarked = total - pass - fail - na;
+
   lines.push(`## Resumen`);
   lines.push("");
   lines.push(`✅ **Pasa:** ${pass} / ${total}  `);
@@ -4331,48 +4393,45 @@ function notionMarkdownForAudit(report) {
   if (unmarked) lines.push(`⚪ **Sin marcar:** ${unmarked} / ${total}  `);
   lines.push("");
 
-  // Sección Fallos primero
-  const fails = [];
-  for (const block of report.audit) {
-    for (const s of block.scenarios) {
-      if (s.result === "fail") fails.push({ block: block.block, ...s });
-    }
-  }
+  // Fallos al principio (más visibles)
+  const fails = steps.filter(s => s.result === "fail");
   if (fails.length) {
     lines.push("---");
     lines.push("");
     lines.push(`## ❌ Fallos detectados (${fails.length})`);
     lines.push("");
     for (const f of fails) {
-      lines.push(`- **${f.block} · Escenario ${f.n}** — ${f.title}`);
-      if (f.comment) lines.push(`  - ${f.comment}`);
+      lines.push(`### Paso ${f.n} — ${f.title}`);
+      if (f.block) lines.push(`📍 **Bloque referenciado:** ${f.block}`);
+      if (f.priority) lines.push(`⚠️ **Prioridad:** ${f.priority}`);
+      if (f.precondition) {
+        lines.push(`**Precondición:**`);
+        lines.push(`> ${f.precondition.split("\n").join("\n> ")}`);
+      }
+      if (f.comment) {
+        lines.push(`**Detalle del fallo:**`);
+        lines.push(`> ${f.comment.split("\n").join("\n> ")}`);
+      }
+      lines.push("");
     }
-    lines.push("");
   }
 
   lines.push("---");
   lines.push("");
-  lines.push(`## Detalle por bloque`);
+  lines.push(`## Pasos del flow en orden`);
   lines.push("");
-  for (const block of report.audit) {
-    if (!block.scenarios.length) continue;
-    let blockPass = 0, blockFail = 0, blockNa = 0, blockUnmarked = 0;
-    for (const s of block.scenarios) {
-      if (s.result === "pass") blockPass++;
-      else if (s.result === "fail") blockFail++;
-      else if (s.result === "na") blockNa++;
-      else blockUnmarked++;
-    }
-    lines.push(`### ${block.block}`);
-    lines.push(`*✅ ${blockPass} · ❌ ${blockFail} · ⏭ ${blockNa}${blockUnmarked ? ` · ⚪ ${blockUnmarked}` : ""}*`);
-    lines.push("");
-    for (const s of block.scenarios) {
-      const icon = RESULT_EMOJI[s.result || "null"] || "⚪";
-      lines.push(`- [${s.result === "pass" ? "x" : " "}] ${icon} **Escenario ${s.n}** — ${s.title}`);
-      if (s.comment) lines.push(`  - ${s.comment}`);
-    }
-    lines.push("");
+  lines.push(`*Cada paso depende de los anteriores — el orden refleja el flujo natural del producto.*`);
+  lines.push("");
+  for (const s of steps) {
+    const icon = RESULT_EMOJI[s.result || "null"] || "⚪";
+    const check = s.result === "pass" ? "x" : " ";
+    const blockBadge = s.block ? ` *(${s.block})*` : "";
+    const prioBadge = s.priority ? ` [${s.priority}]` : "";
+    lines.push(`- [${check}] ${icon} **Paso ${s.n}** — ${s.title}${blockBadge}${prioBadge}`);
+    if (s.precondition) lines.push(`  - 🔗 Depende de: ${s.precondition.replace(/\n/g, " ")}`);
+    if (s.comment) lines.push(`  - 💬 ${s.comment}`);
   }
+  lines.push("");
 
   return { md: lines.join("\n"), stub, sortedBugs: [] };
 }
@@ -4421,7 +4480,8 @@ async function exportNotionBundle() {
     `   en el sitio donde el MD los menciona (ej. "📸 screenshots/bug-001-shot-1.png").\n\n` +
     `Generado: ${report.meta.completedAt}\n` +
     `Modo: ${report.meta.mode}\n` +
-    `Cliente: ${report.meta.client}\n`;
+    `Tester: ${report.meta.tester}\n` +
+    `Rol: ${report.meta.role}\n`;
   files.push({ name: "README.txt", data: new TextEncoder().encode(readme) });
 
   const zipBytes = ZipWriter.create(files);
