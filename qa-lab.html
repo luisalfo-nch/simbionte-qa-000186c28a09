@@ -310,6 +310,116 @@ button.small {
   letter-spacing: 0.08em;
 }
 
+/* ============================================================
+   Home view — CTA Nueva sesión + lista de pendientes
+   ============================================================ */
+
+.new-session-cta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  width: 100%;
+  padding: 18px 22px;
+  margin: var(--space-5) 0;
+  background: linear-gradient(135deg, var(--accent), #5a1689 70%, #4a148c);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  box-shadow: 0 4px 14px rgba(107, 26, 163, 0.25);
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.new-session-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(107, 26, 163, 0.35);
+}
+
+.new-session-cta:active {
+  transform: translateY(0);
+}
+
+.new-session-cta .cta-title {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.new-session-cta .cta-meta {
+  grid-column: 1;
+  grid-row: 2;
+  font-size: 12.5px;
+  font-weight: 500;
+  opacity: 0.88;
+  margin-top: 3px;
+}
+
+.new-session-cta .cta-arrow {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 1;
+  margin-left: var(--space-3);
+  opacity: 0.9;
+}
+
+.pending-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin: var(--space-5) 0 var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.pending-block-header h3 {
+  margin: 0;
+}
+
+/* Setup view header con back button */
+.setup-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.setup-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.back-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--fg);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  background: var(--border);
+  border-color: var(--border-strong);
+}
+
 /* Identity chip in welcome header */
 .identity-chip {
   margin-left: auto;
@@ -1480,8 +1590,8 @@ button.big-action small {
     <button id="btnSaveIdentity" class="primary big" disabled>Continuar</button>
   </section>
 
-  <!-- ===== Welcome (cada sesión) ===== -->
-  <section id="view-welcome" class="view hidden">
+  <!-- ===== Home (landing principal) ===== -->
+  <section id="view-home" class="view hidden">
     <header class="welcome-header">
       <h1>Simbionte QA</h1>
       <span class="badge-lab">Lab</span>
@@ -1491,12 +1601,27 @@ button.big-action small {
       </div>
     </header>
 
+    <button id="btnGoSetup" class="new-session-cta">
+      <span class="cta-title">Nueva sesión de QA</span>
+      <span class="cta-meta">Elige rol y modo</span>
+      <span class="cta-arrow" aria-hidden="true">→</span>
+    </button>
+
     <section id="pendingSessionsBlock" class="pending-block hidden">
-      <h3>Sesiones pendientes</h3>
+      <header class="pending-block-header">
+        <h3>Sesiones previas</h3>
+        <span class="muted small" id="pendingCount"></span>
+      </header>
       <div id="pendingList" class="pending-list"></div>
     </section>
+  </section>
 
-    <h3 id="newSessionHeading">Nueva sesión</h3>
+  <!-- ===== Setup de nueva sesión ===== -->
+  <section id="view-setup" class="view hidden">
+    <header class="setup-header">
+      <button id="btnBackToHome" class="ghost-icon back-btn" title="Volver">←</button>
+      <h2>Nueva sesión</h2>
+    </header>
 
     <label class="field">
       <span>Tu rol</span>
@@ -1516,17 +1641,17 @@ button.big-action small {
       <span>Modo</span>
       <div id="modeList" class="mode-list">
         <div class="mode-option selected" data-mode="bugs">
-          <div class="mode-title">🐛 Bug tickets</div>
+          <div class="mode-title">Bug tickets</div>
           <div class="mode-meta">Registra bugs sueltos sin orden. Cada uno se exporta como Markdown pegable en Linear/Notion.</div>
         </div>
         <div class="mode-option" data-mode="audit">
-          <div class="mode-title">📋 Audit matrix</div>
-          <div class="mode-meta">Recorre los bloques marcando Pass / Fail / N/A por escenario. Bueno para verificación previa a demo.</div>
+          <div class="mode-title">Audit matrix</div>
+          <div class="mode-meta">Recorre los pasos del flow del rol marcando Pass / Fail / N/A. Bueno para verificación previa a demo.</div>
         </div>
       </div>
     </div>
 
-    <button id="btnStart" class="primary big" disabled>Empezar nueva sesión</button>
+    <button id="btnStart" class="primary big" disabled>Empezar sesión</button>
   </section>
 
   <!-- ===== Bug tickets view ===== -->
@@ -4293,7 +4418,7 @@ function timeAgo(iso) {
 }
 
 function show(viewId) {
-  for (const v of ["view-identity", "view-welcome", "view-bugs", "view-audit", "view-final"]) {
+  for (const v of ["view-identity", "view-home", "view-setup", "view-bugs", "view-audit", "view-final"]) {
     $(v).classList.toggle("hidden", v !== viewId);
   }
   window.scrollTo(0, 0);
@@ -4314,27 +4439,35 @@ function showIdentityView() {
   }
 }
 
-function showWelcomeView() {
-  show("view-welcome");
+function showHomeView() {
+  show("view-home");
   $("identityDisplay").textContent = `Hola, ${identity.name}`;
   renderPendingSessions();
-  // Reset el form de nueva sesión
+}
+
+function showSetupView() {
+  show("view-setup");
+  // Reset el form de nueva sesión cada vez que se entra
   session = newSessionTemplate();
   $("roleSelect").value = "";
   document.querySelectorAll(".mode-option").forEach(o => o.classList.toggle("selected", o.dataset.mode === "bugs"));
   session.mode = "bugs";
   updateStartButton();
+  setTimeout(() => $("roleSelect").focus(), 50);
 }
 
 function renderPendingSessions() {
   const pending = sessions.filter(s => !s.completedAt);
   const container = $("pendingList");
   const block = $("pendingSessionsBlock");
+  const countEl = $("pendingCount");
   if (!pending.length) {
     block.classList.add("hidden");
+    if (countEl) countEl.textContent = "";
     return;
   }
   block.classList.remove("hidden");
+  if (countEl) countEl.textContent = `${pending.length} pendiente${pending.length === 1 ? "" : "s"}`;
   container.innerHTML = "";
   pending.sort((a, b) => (b.lastActiveAt || "").localeCompare(a.lastActiveAt || ""));
   for (const s of pending) {
@@ -4405,8 +4538,8 @@ function renderPendingSessions() {
         ${progressBar}
       </div>
       <footer class="session-card-footer">
+        <button class="btn-delete-session ghost" data-id="${s.id}">Eliminar</button>
         <button class="btn-resume primary" data-id="${s.id}">Continuar</button>
-        <button class="btn-delete-session ghost danger" data-id="${s.id}">Eliminar</button>
       </footer>
     `;
     div.querySelector(".btn-resume").addEventListener("click", () => resumeSession(s.id));
@@ -5785,11 +5918,13 @@ async function init() {
     identity.name = $("identityName").value.trim();
     if (!identity.name) return;
     await saveIdentity();
-    showWelcomeView();
+    showHomeView();
   });
 
-  // ===== Welcome bindings =====
+  // ===== Home + Setup bindings =====
   $("btnChangeIdentity").addEventListener("click", showIdentityView);
+  $("btnGoSetup").addEventListener("click", showSetupView);
+  $("btnBackToHome").addEventListener("click", showHomeView);
   renderModeSelector();
   $("roleSelect").addEventListener("change", e => {
     session.role = e.target.value;
@@ -5824,7 +5959,7 @@ async function init() {
   $("btnExitBugs").addEventListener("click", () => {
     // Pausar: guarda sesión y vuelve a welcome (queda en pendientes)
     saveSession();
-    showWelcomeView();
+    showHomeView();
   });
 
   // ===== Audit bindings =====
@@ -5832,7 +5967,7 @@ async function init() {
   $("btnExitAudit").addEventListener("click", () => {
     saveSession();
     $("auditExtras").classList.add("hidden");
-    showWelcomeView();
+    showHomeView();
   });
 
   // Custom step + ad-hoc bug
@@ -5855,14 +5990,14 @@ async function init() {
     // Tras exportar: la sesión actual queda marcada como completada (en buildReport),
     // limpiar currentId y volver al welcome
     await chrome.storage.local.remove(KEY_CURRENT_ID);
-    showWelcomeView();
+    showHomeView();
   });
 
   // Initial view: identity si no tenemos nombre, welcome si sí
   if (!identity.name) {
     showIdentityView();
   } else {
-    showWelcomeView();
+    showHomeView();
   }
 }
 
