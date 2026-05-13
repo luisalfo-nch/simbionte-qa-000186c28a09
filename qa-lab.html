@@ -4030,11 +4030,32 @@ function renderPendingSessions() {
   pending.sort((a, b) => (b.lastActiveAt || "").localeCompare(a.lastActiveAt || ""));
   for (const s of pending) {
     const modeLabel = s.mode === "bugs" ? "🐛 Bug tickets" : "📋 Audit matrix";
-    const bugsCount = s.bugs?.length || 0;
-    const auditCount = Object.values(s.audit || {}).reduce((acc, b) => acc + Object.keys(b.scenarios || {}).length, 0);
-    const progress = s.mode === "bugs"
-      ? `${bugsCount} bug${bugsCount === 1 ? "" : "s"}`
-      : `${auditCount} escenario${auditCount === 1 ? "" : "s"} marcado${auditCount === 1 ? "" : "s"}`;
+    let progress = "";
+    if (s.mode === "bugs") {
+      const bugs = s.bugs || [];
+      const bySev = bugs.reduce((acc, b) => { acc[b.severity] = (acc[b.severity] || 0) + 1; return acc; }, {});
+      const sevParts = ["P0", "P1", "P2", "P3"]
+        .filter(k => bySev[k])
+        .map(k => `${bySev[k]} ${k}`);
+      progress = bugs.length === 0
+        ? "Sin bugs todavía"
+        : `<strong>${bugs.length}</strong> bug${bugs.length === 1 ? "" : "s"}${sevParts.length ? ` · ${sevParts.join(" · ")}` : ""}`;
+    } else {
+      // audit mode (flow-driven): conteo plano por step.n
+      const flow = (window.__QA_DATA?.flows || []).find(f => f.role === s.role);
+      const total = flow?.steps?.length || 0;
+      const auditVals = Object.values(s.audit || {});
+      let pass = 0, fail = 0, na = 0;
+      for (const v of auditVals) {
+        if (v?.result === "pass") pass++;
+        else if (v?.result === "fail") fail++;
+        else if (v?.result === "na") na++;
+      }
+      const marked = pass + fail + na;
+      progress = total === 0
+        ? `${marked} paso${marked === 1 ? "" : "s"} marcado${marked === 1 ? "" : "s"}`
+        : `<strong>${marked}/${total}</strong> pasos · <span style="color:var(--pass)">✓ ${pass}</span> · <span style="color:var(--fail)">✗ ${fail}</span> · <span style="color:var(--skip)">— ${na}</span>`;
+    }
     const lastAt = (s.lastActiveAt || s.startedAt || "").slice(0, 16).replace("T", " ");
     const div = document.createElement("div");
     div.className = "session-item";
