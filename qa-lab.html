@@ -83,8 +83,10 @@ html, body {
   -webkit-font-smoothing: antialiased;
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;   /* evita scroll horizontal accidental */
+  overflow-x: hidden;
 }
+
+html { scroll-padding-top: 76px; }  /* safe area para sticky bar al hacer scrollIntoView */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -741,27 +743,103 @@ button.small {
 }
 
 /* ============================================================
-   View header (bugs / audit)
+   Sticky bar (bugs / audit views) — home icon + progress + export icon
    ============================================================ */
 
-.view-header {
+.sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-3);
-  border-bottom: 1px solid var(--border);
-}
-
-.view-header h2 {
-  margin-top: 2px;
-}
-
-.header-actions {
-  display: flex;
-  gap: var(--space-2);
   align-items: center;
+  gap: var(--space-2);
+  padding: 10px 12px;
+  background: rgba(250, 250, 250, 0.92);
+  backdrop-filter: saturate(180%) blur(10px);
+  -webkit-backdrop-filter: saturate(180%) blur(10px);
+  border-bottom: 1px solid var(--border);
+  /* Extiende al ancho del view (compensa el padding del .view) */
+  margin: calc(var(--space-5) * -1) calc(var(--space-5) * -1) var(--space-3);
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.sticky-icon-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--fg);
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sticky-icon-btn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-strong);
+}
+
+.sticky-icon-btn:active {
+  background: var(--border);
+}
+
+.sticky-icon-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sticky-icon-btn.primary-icon {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.sticky-icon-btn.primary-icon:hover {
+  background: #5a1689;
+  border-color: #5a1689;
+}
+
+.sticky-progress {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.sticky-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sticky-meta-line {
+  font-size: 11px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sticky-meta-sub {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--fg);
+  letter-spacing: -0.005em;
+}
+
+.audit-session-label {
+  margin-bottom: var(--space-3);
+  font-size: 11px;
 }
 
 /* ============================================================
@@ -953,19 +1031,26 @@ button.small {
    ============================================================ */
 
 .audit-progress {
-  /* Sin caja: solo contador + barra fina */
+  /* Vive dentro del sticky-bar, sin caja, compacto */
   background: transparent;
   border: none;
-  border-radius: 0;
-  padding: 0 0 var(--space-2);
-  margin-bottom: var(--space-3);
-  font-size: 13px;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+  display: block;
+  width: 100%;
+}
+
+.audit-progress .audit-counters {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
   gap: var(--space-2);
-  box-shadow: none;
+  font-size: 11.5px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.audit-progress .audit-progress-bar {
+  height: 4px;
 }
 
 .audit-progress-bar {
@@ -1748,15 +1833,17 @@ button.big-action small {
 
   <!-- ===== Bug tickets view ===== -->
   <section id="view-bugs" class="view hidden">
-    <header class="view-header">
-      <div>
-        <div class="muted small" id="sessionLabel"></div>
-        <h2>Bug tickets</h2>
+    <header class="sticky-bar">
+      <button id="btnExitBugs" class="sticky-icon-btn" title="Volver a home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <div class="sticky-meta">
+        <div class="sticky-meta-line" id="sessionLabel"></div>
+        <div class="sticky-meta-sub" id="bugsProgressLabel"></div>
       </div>
-      <div class="header-actions">
-        <button id="btnFinishBugs" class="primary">Exportar y cerrar</button>
-        <button id="btnExitBugs" class="ghost small" title="Pausar">⏸</button>
-      </div>
+      <button id="btnFinishBugs" class="sticky-icon-btn primary-icon" title="Exportar reporte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+      </button>
     </header>
 
     <div class="bug-layout">
@@ -1827,18 +1914,17 @@ button.big-action small {
 
   <!-- ===== Audit matrix view ===== -->
   <section id="view-audit" class="view hidden">
-    <header class="view-header">
-      <div>
-        <div class="muted small" id="auditSessionLabel"></div>
-        <h2>Audit matrix</h2>
-      </div>
-      <div class="header-actions">
-        <button id="btnFinishAudit" class="primary">Exportar y cerrar</button>
-        <button id="btnExitAudit" class="ghost small">⏸</button>
-      </div>
+    <header class="sticky-bar">
+      <button id="btnExitAudit" class="sticky-icon-btn" title="Volver a home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+      <div class="sticky-progress" id="auditProgress"></div>
+      <button id="btnFinishAudit" class="sticky-icon-btn primary-icon" title="Exportar reporte">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+      </button>
     </header>
 
-    <div class="audit-progress" id="auditProgress"></div>
+    <div class="audit-session-label muted small" id="auditSessionLabel"></div>
 
     <div id="auditBlocks" class="audit-blocks">
       <!-- populated by JS -->
@@ -4799,9 +4885,27 @@ function renderModeSelector() {
 // ===== Bugs view =====
 function renderBugsView() {
   $("sessionLabel").textContent = sessionLabel();
+  updateBugsProgress();
   renderBugList();
   populateBlockDropdown();
   closeBugForm();
+}
+
+function updateBugsProgress() {
+  const label = $("bugsProgressLabel");
+  if (!label) return;
+  const bugs = session.bugs || [];
+  const total = bugs.length;
+  if (total === 0) {
+    label.textContent = "Sin bugs todavía";
+    return;
+  }
+  const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
+  for (const b of bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
+  const sevParts = ["P0", "P1", "P2", "P3"]
+    .filter(k => counts[k])
+    .map(k => `${counts[k]} ${k}`);
+  label.textContent = `${total} bug${total === 1 ? "" : "s"}${sevParts.length ? " · " + sevParts.join(" · ") : ""}`;
 }
 
 function renderBugList() {
@@ -4977,6 +5081,7 @@ async function captureScreenshotForBug() {
     renderBugScreenshots(bug.screenshots);
     renderBugContext(bug.context);
     renderBugList();
+    updateBugsProgress();
     await saveSession();
   } catch (err) {
     alert(`Error: ${err.message}`);
