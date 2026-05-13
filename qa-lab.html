@@ -80,8 +80,14 @@ html, body {
   font-family: var(--font-stack);
   font-size: 14px;
   line-height: var(--leading-base);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  /* Popup dimensions (Chrome max 800x600) */
+  width: 460px;
+}
+body {
+  min-height: 440px;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 .view {
@@ -943,6 +949,23 @@ button.small {
   margin-bottom: var(--space-5);
 }
 
+button.big-action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 14px 16px;
+  gap: 4px;
+  line-height: 1.3;
+}
+
+button.big-action small {
+  font-size: 11.5px;
+  font-weight: 400;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
 /* ============================================================
    Callouts (from md-render)
    ============================================================ */
@@ -1145,9 +1168,10 @@ button.small {
 
     <h3>Descargar reporte</h3>
     <div class="export-buttons">
-      <button id="btnExportJson" class="primary">⬇ JSON estructurado</button>
-      <button id="btnExportMd" class="primary">⬇ Markdown (tickets en formato Linear)</button>
-      <button id="btnExportBoth" class="ghost">⬇ Ambos</button>
+      <button id="btnExportNotion" class="primary big-action">📋 Bundle para Notion (ZIP)<small>MD pegable + screenshots PNG separados</small></button>
+      <button id="btnExportMd" class="ghost">⬇ Markdown plano (Linear)</button>
+      <button id="btnExportJson" class="ghost">⬇ JSON estructurado</button>
+      <button id="btnExportBoth" class="ghost">⬇ MD + JSON</button>
     </div>
 
     <button id="btnNewSession" class="ghost">Empezar nueva sesión</button>
@@ -2942,6 +2966,144 @@ window.__QA_DATA = {
   global.MdRender = { toHtml, escapeHtml, inline };
 })(typeof window !== "undefined" ? window : globalThis);
 </script>
+  <script>// Mini ZIP writer (STORE mode, sin compresión) — Simbionte QA Lab
+// Suficiente para empaquetar Markdown + PNGs (los PNGs ya están comprimidos).
+// ~100 líneas, sin dependencias. Resultado: Uint8Array con un ZIP válido.
+//
+// Uso:
+//   const blob = new Blob([ZipWriter.create([
+//     { name: "report.md", data: new TextEncoder().encode(mdContent) },
+//     { name: "screenshots/shot-001.png", data: pngBytes },
+//   ])], { type: "application/zip" });
+//   const url = URL.createObjectURL(blob);
+
+(function (global) {
+  // CRC32 table
+  const crcTable = (() => {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[i] = c;
+    }
+    return t;
+  })();
+
+  function crc32(data) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < data.length; i++) {
+      c = crcTable[(c ^ data[i]) & 0xFF] ^ (c >>> 8);
+    }
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function create(files) {
+    // files: [{ name: string, data: Uint8Array }]
+    const encoder = new TextEncoder();
+    const records = [];
+    let totalLocal = 0;
+
+    for (const f of files) {
+      const nameBytes = encoder.encode(f.name);
+      const crc = crc32(f.data);
+      const size = f.data.length;
+
+      // Local file header (30 bytes + filename)
+      const local = new Uint8Array(30 + nameBytes.length + size);
+      const lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);   // local file header signature
+      lv.setUint16(4, 20, true);            // version needed
+      lv.setUint16(6, 0, true);             // general purpose bit flag
+      lv.setUint16(8, 0, true);             // compression method = 0 (store)
+      lv.setUint16(10, 0, true);            // last mod time
+      lv.setUint16(12, 0x21, true);         // last mod date (arbitrario, 2026-01-01)
+      lv.setUint32(14, crc, true);          // crc-32
+      lv.setUint32(18, size, true);         // compressed size
+      lv.setUint32(22, size, true);         // uncompressed size
+      lv.setUint16(26, nameBytes.length, true); // filename length
+      lv.setUint16(28, 0, true);            // extra field length
+      local.set(nameBytes, 30);
+      local.set(f.data, 30 + nameBytes.length);
+
+      records.push({
+        local,
+        offset: totalLocal,
+        nameBytes,
+        crc,
+        size,
+      });
+      totalLocal += local.length;
+    }
+
+    // Central directory
+    const centralEntries = records.map(r => {
+      const central = new Uint8Array(46 + r.nameBytes.length);
+      const cv = new DataView(central.buffer);
+      cv.setUint32(0, 0x02014b50, true);   // central file header signature
+      cv.setUint16(4, 20, true);            // version made by
+      cv.setUint16(6, 20, true);            // version needed
+      cv.setUint16(8, 0, true);             // flags
+      cv.setUint16(10, 0, true);            // compression = store
+      cv.setUint16(12, 0, true);            // mod time
+      cv.setUint16(14, 0x21, true);         // mod date
+      cv.setUint32(16, r.crc, true);
+      cv.setUint32(20, r.size, true);
+      cv.setUint32(24, r.size, true);
+      cv.setUint16(28, r.nameBytes.length, true);
+      cv.setUint16(30, 0, true);            // extra field length
+      cv.setUint16(32, 0, true);            // file comment length
+      cv.setUint16(34, 0, true);            // disk number start
+      cv.setUint16(36, 0, true);            // internal file attributes
+      cv.setUint32(38, 0, true);            // external file attributes
+      cv.setUint32(42, r.offset, true);     // relative offset of local header
+      central.set(r.nameBytes, 46);
+      return central;
+    });
+
+    const totalCentral = centralEntries.reduce((s, c) => s + c.length, 0);
+    const totalSize = totalLocal + totalCentral + 22;
+    const out = new Uint8Array(totalSize);
+    let pos = 0;
+    for (const r of records) {
+      out.set(r.local, pos);
+      pos += r.local.length;
+    }
+    const centralStart = pos;
+    for (const c of centralEntries) {
+      out.set(c, pos);
+      pos += c.length;
+    }
+
+    // End of central directory record
+    const eocd = new Uint8Array(22);
+    const ev = new DataView(eocd.buffer);
+    ev.setUint32(0, 0x06054b50, true);     // EOCD signature
+    ev.setUint16(4, 0, true);               // disk number
+    ev.setUint16(6, 0, true);               // disk where central dir starts
+    ev.setUint16(8, records.length, true);  // num entries this disk
+    ev.setUint16(10, records.length, true); // total entries
+    ev.setUint32(12, totalCentral, true);   // size of central dir
+    ev.setUint32(16, centralStart, true);   // offset of central dir
+    ev.setUint16(20, 0, true);              // comment length
+    out.set(eocd, pos);
+
+    return out;
+  }
+
+  // Helper: data:image/png;base64,... → Uint8Array
+  function dataUrlToBytes(dataUrl) {
+    const i = dataUrl.indexOf(",");
+    if (i === -1) return new Uint8Array(0);
+    const b64 = dataUrl.slice(i + 1);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let j = 0; j < bin.length; j++) bytes[j] = bin.charCodeAt(j);
+    return bytes;
+  }
+
+  global.ZipWriter = { create, dataUrlToBytes };
+})(typeof window !== "undefined" ? window : globalThis);
+</script>
   <script>
 // ===== Preview stubs — sustituyen las APIs chrome.* que no existen fuera de la extensión =====
 (function () {
@@ -3797,6 +3959,13 @@ function downloadFile(content, filename, mime) {
   });
 }
 
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  chrome.downloads.download({ url, filename, saveAs: true }, () => {
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  });
+}
+
 function exportJson() {
   const report = buildReport();
   const stub = `qa-lab-${report.meta.mode}-${(report.meta.client || "x").replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
@@ -3807,6 +3976,232 @@ function exportMd() {
   const report = buildReport();
   const stub = `qa-lab-${report.meta.mode}-${(report.meta.client || "x").replace(/\s+/g, "-")}-${report.meta.completedAt.slice(0, 10)}`;
   downloadFile(reportToMarkdown(report), `${stub}.md`, "text/markdown");
+}
+
+// ===== Notion-friendly export =====
+// Genera un Markdown adaptado al pegado en Notion (sin callouts GitHub, sin
+// data: URIs en imágenes, con emojis para severities, screenshots referenciados
+// como paths a archivos PNG separados). Empaqueta TODO en un ZIP descargable.
+const SEV_EMOJI = { P0: "🔴", P1: "🟠", P2: "🟡", P3: "⚪" };
+const RESULT_EMOJI = { pass: "✅", fail: "❌", na: "⏭", null: "⚪", undefined: "⚪" };
+
+function notionMarkdownForBugs(report) {
+  const lines = [];
+  const stub = `qa-lab-${report.meta.client?.replace(/\s+/g, "-") || "session"}-${report.meta.completedAt.slice(0, 10)}`;
+  lines.push(`# 🐛 QA Lab — ${report.meta.client || "Sesión"}`);
+  lines.push("");
+  lines.push(`**Tester:** ${report.meta.tester || "—"}  `);
+  lines.push(`**Rol:** ${report.meta.role || "—"}  `);
+  lines.push(`**Fecha:** ${report.meta.completedAt.slice(0, 10)}  `);
+  lines.push(`**Versión QA data:** \`${report.meta.generatedFromSha}\``);
+  lines.push("");
+
+  // Resumen severities
+  const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
+  for (const b of report.bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
+  lines.push(`## Resumen`);
+  lines.push("");
+  lines.push(`${SEV_EMOJI.P0} **P0 (bloquea producción):** ${counts.P0}  `);
+  lines.push(`${SEV_EMOJI.P1} **P1 (bloquea demo):** ${counts.P1}  `);
+  lines.push(`${SEV_EMOJI.P2} **P2 (degrada UX):** ${counts.P2}  `);
+  lines.push(`${SEV_EMOJI.P3} **P3 (polish):** ${counts.P3}  `);
+  lines.push(`**Total:** ${report.bugs.length} bug${report.bugs.length === 1 ? "" : "s"}`);
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  // Sort severity asc
+  const order = { P0: 0, P1: 1, P2: 2, P3: 3 };
+  const sorted = report.bugs.slice().sort((a, b) => (order[a.severity] ?? 9) - (order[b.severity] ?? 9));
+
+  let bugIdx = 0;
+  for (const bug of sorted) {
+    bugIdx++;
+    const padded = String(bugIdx).padStart(3, "0");
+    const emoji = SEV_EMOJI[bug.severity] || "⚪";
+    lines.push(`## ${emoji} [${bug.severity}] ${bug.title}`);
+    lines.push("");
+    if (bug.blockSlug) lines.push(`📍 **Bloque:** \`${bug.blockSlug}\``);
+    if (bug.context?.url) lines.push(`🔗 **URL:** \`${bug.context.url}\``);
+    if (bug.context?.title) lines.push(`📄 **Page:** ${bug.context.title}`);
+    if (bug.createdAt) lines.push(`🕐 **Reportado:** ${bug.createdAt.slice(0, 16).replace("T", " ")}`);
+    lines.push("");
+
+    if (bug.steps) {
+      lines.push(`### Pasos para reproducir`);
+      lines.push("");
+      // Si los pasos no empiezan con "1.", normalizar
+      const stepsText = bug.steps.trim();
+      if (/^\s*\d+\./.test(stepsText)) {
+        lines.push(stepsText);
+      } else {
+        const split = stepsText.split(/\n+/).filter(Boolean);
+        split.forEach((s, i) => lines.push(`${i + 1}. ${s.replace(/^[-*\d.]\s*/, "")}`));
+      }
+      lines.push("");
+    }
+    if (bug.expected) {
+      lines.push(`### Resultado esperado`);
+      lines.push("");
+      lines.push(`> ✅ ${bug.expected.split("\n").join("\n> ")}`);
+      lines.push("");
+    }
+    if (bug.actual) {
+      lines.push(`### Resultado actual`);
+      lines.push("");
+      lines.push(`> ❌ ${bug.actual.split("\n").join("\n> ")}`);
+      lines.push("");
+    }
+    if (bug.screenshots?.length) {
+      lines.push(`### Screenshots`);
+      lines.push("");
+      lines.push(`*Arrastra los archivos PNG de \`screenshots/\` a Notion (Notion no carga imágenes desde paths en el MD; necesita drag-drop):*`);
+      lines.push("");
+      bug.screenshots.forEach((s, j) => {
+        const fname = `screenshots/bug-${padded}-shot-${j + 1}.png`;
+        lines.push(`- 📸 \`${fname}\``);
+        if (s.url) lines.push(`  - capturado en \`${s.url}\``);
+      });
+      lines.push("");
+    }
+    lines.push("---");
+    lines.push("");
+  }
+
+  if (sorted.length === 0) {
+    lines.push("_Sin bugs registrados en esta sesión._");
+  }
+
+  return { md: lines.join("\n"), stub, sortedBugs: sorted };
+}
+
+function notionMarkdownForAudit(report) {
+  const lines = [];
+  const stub = `qa-lab-audit-${report.meta.client?.replace(/\s+/g, "-") || "session"}-${report.meta.completedAt.slice(0, 10)}`;
+
+  lines.push(`# 📋 QA Lab Audit — ${report.meta.client || "Sesión"}`);
+  lines.push("");
+  lines.push(`**Tester:** ${report.meta.tester || "—"}  `);
+  lines.push(`**Rol:** ${report.meta.role || "—"}  `);
+  lines.push(`**Fecha:** ${report.meta.completedAt.slice(0, 10)}  `);
+  lines.push(`**Versión QA data:** \`${report.meta.generatedFromSha}\``);
+  lines.push("");
+
+  // Resumen contadores
+  let total = 0, pass = 0, fail = 0, na = 0;
+  for (const b of report.audit) {
+    for (const s of b.scenarios) {
+      total++;
+      if (s.result === "pass") pass++;
+      else if (s.result === "fail") fail++;
+      else if (s.result === "na") na++;
+    }
+  }
+  const unmarked = total - pass - fail - na;
+  lines.push(`## Resumen`);
+  lines.push("");
+  lines.push(`✅ **Pasa:** ${pass} / ${total}  `);
+  lines.push(`❌ **Falla:** ${fail} / ${total}  `);
+  lines.push(`⏭ **N/A:** ${na} / ${total}  `);
+  if (unmarked) lines.push(`⚪ **Sin marcar:** ${unmarked} / ${total}  `);
+  lines.push("");
+
+  // Sección Fallos primero
+  const fails = [];
+  for (const block of report.audit) {
+    for (const s of block.scenarios) {
+      if (s.result === "fail") fails.push({ block: block.block, ...s });
+    }
+  }
+  if (fails.length) {
+    lines.push("---");
+    lines.push("");
+    lines.push(`## ❌ Fallos detectados (${fails.length})`);
+    lines.push("");
+    for (const f of fails) {
+      lines.push(`- **${f.block} · Escenario ${f.n}** — ${f.title}`);
+      if (f.comment) lines.push(`  - ${f.comment}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("---");
+  lines.push("");
+  lines.push(`## Detalle por bloque`);
+  lines.push("");
+  for (const block of report.audit) {
+    if (!block.scenarios.length) continue;
+    let blockPass = 0, blockFail = 0, blockNa = 0, blockUnmarked = 0;
+    for (const s of block.scenarios) {
+      if (s.result === "pass") blockPass++;
+      else if (s.result === "fail") blockFail++;
+      else if (s.result === "na") blockNa++;
+      else blockUnmarked++;
+    }
+    lines.push(`### ${block.block}`);
+    lines.push(`*✅ ${blockPass} · ❌ ${blockFail} · ⏭ ${blockNa}${blockUnmarked ? ` · ⚪ ${blockUnmarked}` : ""}*`);
+    lines.push("");
+    for (const s of block.scenarios) {
+      const icon = RESULT_EMOJI[s.result || "null"] || "⚪";
+      lines.push(`- [${s.result === "pass" ? "x" : " "}] ${icon} **Escenario ${s.n}** — ${s.title}`);
+      if (s.comment) lines.push(`  - ${s.comment}`);
+    }
+    lines.push("");
+  }
+
+  return { md: lines.join("\n"), stub, sortedBugs: [] };
+}
+
+async function exportNotionBundle() {
+  const report = buildReport();
+  const { md, stub, sortedBugs } =
+    report.meta.mode === "bugs"
+      ? notionMarkdownForBugs(report)
+      : notionMarkdownForAudit(report);
+
+  // Empaqueta MD + (si modo bugs) screenshots PNG
+  const files = [
+    { name: "report.md", data: new TextEncoder().encode(md) },
+  ];
+
+  if (report.meta.mode === "bugs") {
+    let bugIdx = 0;
+    for (const bug of sortedBugs) {
+      bugIdx++;
+      const padded = String(bugIdx).padStart(3, "0");
+      (bug.screenshots || []).forEach((s, j) => {
+        if (!s.dataUrl) return;
+        try {
+          const bytes = ZipWriter.dataUrlToBytes(s.dataUrl);
+          files.push({
+            name: `screenshots/bug-${padded}-shot-${j + 1}.png`,
+            data: bytes,
+          });
+        } catch (e) {
+          console.warn("Failed to extract screenshot bytes:", e);
+        }
+      });
+    }
+  }
+
+  // Añade un README breve dentro del ZIP
+  const readme =
+    `Simbionte QA Lab — bundle para Notion\n` +
+    `=====================================\n\n` +
+    `1. Abre report.md en cualquier editor de markdown.\n` +
+    `2. Copia TODO el contenido.\n` +
+    `3. Crea una página nueva en Notion y pega.\n` +
+    `4. Notion convierte headings, listas, blockquotes y code blocks automáticamente.\n` +
+    `5. Para los screenshots: arrastra los PNGs de la carpeta screenshots/ a la página de Notion\n` +
+    `   en el sitio donde el MD los menciona (ej. "📸 screenshots/bug-001-shot-1.png").\n\n` +
+    `Generado: ${report.meta.completedAt}\n` +
+    `Modo: ${report.meta.mode}\n` +
+    `Cliente: ${report.meta.client}\n`;
+  files.push({ name: "README.txt", data: new TextEncoder().encode(readme) });
+
+  const zipBytes = ZipWriter.create(files);
+  const blob = new Blob([zipBytes], { type: "application/zip" });
+  downloadBlob(blob, `${stub}-notion.zip`);
 }
 
 // ===== Utilities =====
@@ -3859,6 +4254,7 @@ async function init() {
   $("btnExitAudit").addEventListener("click", () => show("view-welcome"));
 
   // Final
+  $("btnExportNotion").addEventListener("click", exportNotionBundle);
   $("btnExportJson").addEventListener("click", exportJson);
   $("btnExportMd").addEventListener("click", exportMd);
   $("btnExportBoth").addEventListener("click", () => { exportJson(); setTimeout(exportMd, 300); });
