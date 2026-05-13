@@ -349,10 +349,8 @@ button.small {
 }
 
 .session-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  display: block;
+  padding: var(--space-3) var(--space-4);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -363,58 +361,66 @@ button.small {
   box-shadow: var(--shadow-sm);
 }
 
-.session-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.session-meta {
+.session-card-header {
   display: flex;
-  gap: 6px;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
 }
 
 .badge-mode {
   font-size: 10.5px;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-xs);
   background: var(--accent-soft);
   color: var(--accent);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.badge-role-small {
-  font-size: 10.5px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: var(--radius-xs);
-  background: var(--bg-subtle);
-  color: var(--fg-muted);
+.session-relative-time {
+  font-size: 11.5px;
+  color: var(--fg-subtle);
+  font-variant-numeric: tabular-nums;
+  cursor: help;
 }
 
-.session-progress {
-  font-size: 13px;
-  font-weight: 500;
+.session-card-body {
+  margin: 0 0 var(--space-4);
+}
+
+.session-role {
+  font-size: 22px;
+  font-weight: 700;
   color: var(--fg);
-  margin-bottom: 6px;
+  text-transform: capitalize;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  margin-bottom: var(--space-3);
 }
 
 .session-progress-bar {
   display: flex;
-  height: 7px;
+  height: 8px;
   border-radius: 4px;
   overflow: hidden;
   background: var(--bg-subtle);
   border: 1px solid var(--border);
-  margin: 4px 0 6px;
+}
+.session-progress-bar.empty {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--bg-subtle),
+    var(--bg-subtle) 4px,
+    transparent 4px,
+    transparent 8px
+  );
 }
 .session-progress-bar > span {
   height: 100%;
   display: block;
-  transition: width 0.3s ease-out;
+  transition: width 0.4s ease-out;
 }
 .spb-pass { background: var(--pass); }
 .spb-fail { background: var(--fail); }
@@ -424,15 +430,32 @@ button.small {
 .spb-p2   { background: var(--p2); }
 .spb-p3   { background: var(--p3); }
 
-.session-date {
-  font-size: 11px;
+.session-card-footer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
 }
 
-.session-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  flex-shrink: 0;
+.session-card-footer .btn-resume {
+  flex: 2;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.session-card-footer .btn-delete-session {
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--fg-muted);
+  border-color: var(--border);
+  background: transparent;
+}
+.session-card-footer .btn-delete-session:hover {
+  color: var(--fail);
+  border-color: var(--fail);
+  background: var(--fail-soft);
 }
 
 .mode-list {
@@ -4250,6 +4273,25 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
 
+function timeAgo(iso) {
+  if (!iso) return "—";
+  const diffMs = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(diffMs)) return "—";
+  const diffSec = Math.round(diffMs / 1000);
+  if (diffSec < 30) return "ahora mismo";
+  if (diffSec < 60) return "hace 1m";
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `hace ${diffMin}m`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `hace ${diffH}h`;
+  const diffD = Math.round(diffH / 24);
+  if (diffD < 7) return `hace ${diffD}d`;
+  const diffW = Math.round(diffD / 7);
+  if (diffW < 4) return `hace ${diffW}sem`;
+  const diffMo = Math.round(diffD / 30);
+  return `hace ${diffMo}mo`;
+}
+
 function show(viewId) {
   for (const v of ["view-identity", "view-welcome", "view-bugs", "view-audit", "view-final"]) {
     $(v).classList.toggle("hidden", v !== viewId);
@@ -4296,37 +4338,13 @@ function renderPendingSessions() {
   container.innerHTML = "";
   pending.sort((a, b) => (b.lastActiveAt || "").localeCompare(a.lastActiveAt || ""));
   for (const s of pending) {
-    const modeLabel = s.mode === "bugs" ? "🐛 Bug tickets" : "📋 Audit matrix";
-    let progress = "";
-    if (s.mode === "bugs") {
-      const bugs = s.bugs || [];
-      const bySev = bugs.reduce((acc, b) => { acc[b.severity] = (acc[b.severity] || 0) + 1; return acc; }, {});
-      const sevParts = ["P0", "P1", "P2", "P3"]
-        .filter(k => bySev[k])
-        .map(k => `${bySev[k]} ${k}`);
-      progress = bugs.length === 0
-        ? "Sin bugs todavía"
-        : `<strong>${bugs.length}</strong> bug${bugs.length === 1 ? "" : "s"}${sevParts.length ? ` · ${sevParts.join(" · ")}` : ""}`;
-    } else {
-      // audit mode (flow-driven): conteo plano por step.n
-      const flow = (window.__QA_DATA?.flows || []).find(f => f.role === s.role);
-      const total = flow?.steps?.length || 0;
-      const auditVals = Object.values(s.audit || {});
-      let pass = 0, fail = 0, na = 0;
-      for (const v of auditVals) {
-        if (v?.result === "pass") pass++;
-        else if (v?.result === "fail") fail++;
-        else if (v?.result === "na") na++;
-      }
-      const marked = pass + fail + na;
-      progress = total === 0
-        ? `${marked} paso${marked === 1 ? "" : "s"} marcado${marked === 1 ? "" : "s"}`
-        : `<strong>${marked}/${total}</strong> pasos · <span style="color:var(--pass)">✓ ${pass}</span> · <span style="color:var(--fail)">✗ ${fail}</span> · <span style="color:var(--skip)">— ${na}</span>`;
-    }
-    const lastAt = (s.lastActiveAt || s.startedAt || "").slice(0, 16).replace("T", " ");
+    const modeLabel = s.mode === "bugs" ? "Bug tickets" : "Audit matrix";
+    const relTime = timeAgo(s.lastActiveAt || s.startedAt);
+    const tooltipTime = (s.lastActiveAt || s.startedAt || "").slice(0, 16).replace("T", " ");
 
-    // Barra de progreso segmentada (4 colores): pass / fail / na / pending
+    // Barra segmentada + tooltip con el desglose numérico (sustituye a la línea de texto)
     let progressBar = "";
+    let progressTooltip = "";
     if (s.mode === "audit") {
       const flow = (window.__QA_DATA?.flows || []).find(f => f.role === s.role);
       const total = (flow?.steps?.length || 0) + (s.customSteps?.length || 0);
@@ -4337,52 +4355,59 @@ function renderPendingSessions() {
         else if (v?.result === "fail") fail++;
         else if (v?.result === "na") na++;
       }
+      const marked = pass + fail + na;
       if (total > 0) {
         const passW = (pass / total) * 100;
         const failW = (fail / total) * 100;
         const naW = (na / total) * 100;
+        progressTooltip = `${marked}/${total} marcados · ${pass} pasa · ${fail} falla · ${na} N/A`;
         progressBar = `
-          <div class="session-progress-bar" title="${pass}/${total} pasa · ${fail}/${total} falla · ${na}/${total} N/A">
+          <div class="session-progress-bar" title="${progressTooltip}">
             <span class="spb-pass" style="width:${passW}%"></span>
             <span class="spb-fail" style="width:${failW}%"></span>
             <span class="spb-na" style="width:${naW}%"></span>
           </div>
         `;
+      } else {
+        progressTooltip = "Sin pasos todavía";
+        progressBar = `<div class="session-progress-bar empty" title="${progressTooltip}"></div>`;
       }
     } else if (s.mode === "bugs") {
-      // Barra por severidad: P0 P1 P2 P3
       const bugs = s.bugs || [];
-      if (bugs.length > 0) {
-        const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
-        for (const b of bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
-        const total = bugs.length;
+      const counts = { P0: 0, P1: 0, P2: 0, P3: 0 };
+      for (const b of bugs) counts[b.severity] = (counts[b.severity] || 0) + 1;
+      const total = bugs.length;
+      if (total > 0) {
+        progressTooltip = `${total} bug${total === 1 ? "" : "s"} · ${counts.P0} P0 · ${counts.P1} P1 · ${counts.P2} P2 · ${counts.P3} P3`;
         progressBar = `
-          <div class="session-progress-bar" title="P0:${counts.P0} P1:${counts.P1} P2:${counts.P2} P3:${counts.P3}">
+          <div class="session-progress-bar" title="${progressTooltip}">
             <span class="spb-p0" style="width:${(counts.P0 / total) * 100}%"></span>
             <span class="spb-p1" style="width:${(counts.P1 / total) * 100}%"></span>
             <span class="spb-p2" style="width:${(counts.P2 / total) * 100}%"></span>
             <span class="spb-p3" style="width:${(counts.P3 / total) * 100}%"></span>
           </div>
         `;
+      } else {
+        progressTooltip = "Sin bugs todavía";
+        progressBar = `<div class="session-progress-bar empty" title="${progressTooltip}"></div>`;
       }
     }
 
     const div = document.createElement("div");
     div.className = "session-item";
     div.innerHTML = `
-      <div class="session-info">
-        <div class="session-meta">
-          <span class="badge-mode">${modeLabel}</span>
-          <span class="badge-role-small">${escapeHtml(s.role || "sin rol")}</span>
-        </div>
-        <div class="session-progress">${progress}</div>
+      <header class="session-card-header">
+        <span class="badge-mode">${modeLabel}</span>
+        <span class="session-relative-time" title="${tooltipTime}">${relTime}</span>
+      </header>
+      <div class="session-card-body">
+        <div class="session-role">${escapeHtml(s.role || "Sin rol")}</div>
         ${progressBar}
-        <div class="session-date muted small">Última actividad: ${lastAt}</div>
       </div>
-      <div class="session-actions">
-        <button class="btn-resume primary small" data-id="${s.id}">Continuar →</button>
-        <button class="btn-delete-session ghost small" data-id="${s.id}" title="Descartar">🗑</button>
-      </div>
+      <footer class="session-card-footer">
+        <button class="btn-resume primary" data-id="${s.id}">Continuar</button>
+        <button class="btn-delete-session ghost danger" data-id="${s.id}">Eliminar</button>
+      </footer>
     `;
     div.querySelector(".btn-resume").addEventListener("click", () => resumeSession(s.id));
     div.querySelector(".btn-delete-session").addEventListener("click", e => {
