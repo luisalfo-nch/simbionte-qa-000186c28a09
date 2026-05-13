@@ -6087,13 +6087,11 @@ async function init() {
   // (role tiles bindings se generan en renderRoleTiles cada vez que entras a setup)
 
   $("btnStart").addEventListener("click", async () => {
-    // Nueva sesión a partir del template + valores del form
-    const newSession = newSessionTemplate();
-    newSession.role = $("roleSelect").value;
-    const selectedMode = document.querySelector(".mode-option.selected");
-    newSession.mode = selectedMode?.dataset.mode || "bugs";
-    newSession.startedAt = new Date().toISOString();
-    session = newSession;
+    if (!session.role) return;
+    // session.role y session.mode ya están sincronizados por los handlers de
+    // tiles (renderRoleTiles) y mode-options (renderModeSelector). Solo falta
+    // marcar inicio y persistir.
+    session.startedAt = new Date().toISOString();
     await saveSession();
     if (session.mode === "bugs") {
       show("view-bugs");
